@@ -1,0 +1,2987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>PayPlan Ledger — Live Demo</title>
+  <meta name="theme-color" content="#070a14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PayPlan Ledger — Demo" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="PayPlan Ledger — Demo" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="description" content="Interactive read-only demo of PayPlan Ledger — offline hire purchase tracker." />
+
+  <!-- PDF Generation Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    input, select, textarea {
+      -webkit-user-select: text;
+      user-select: text;
+      -webkit-touch-callout: default;
+    }
+
+    :root {
+      --bg: #f5f7fb;
+      --bg-elevated: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #eef2f8;
+      --border: rgba(15, 23, 42, 0.08);
+      --border-strong: rgba(15, 23, 42, 0.12);
+      --divider: rgba(15, 23, 42, 0.06);
+      --text: #0a0f1f;
+      --text-2: #475569;
+      --text-3: #94a3b8;
+      --primary: #10b981;
+      --primary-2: #059669;
+      --primary-soft: rgba(16, 185, 129, 0.1);
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --accent: #f59e0b;
+      --accent-soft: rgba(245, 158, 11, 0.1);
+      --accent-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.1);
+      --info: #3b82f6;
+      --info-soft: rgba(59, 130, 246, 0.1);
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1), 0 4px 8px rgba(15, 23, 42, 0.04);
+      --shadow-xl: 0 24px 64px rgba(15, 23, 42, 0.16), 0 8px 16px rgba(15, 23, 42, 0.06);
+      --shadow-primary: 0 8px 24px rgba(16, 185, 129, 0.28);
+      --radius-sm: 12px;
+      --radius: 16px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --radius-full: 999px;
+      --sidebar-width: 72px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-spring: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body.dark {
+      --bg: #070a14;
+      --bg-elevated: #0d1220;
+      --surface: #131a2c;
+      --surface-2: #182034;
+      --surface-3: #1e283e;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.14);
+      --divider: rgba(255, 255, 255, 0.06);
+      --text: #f1f5f9;
+      --text-2: #94a3b8;
+      --text-3: #64748b;
+      --primary: #10b981;
+      --primary-2: #34d399;
+      --primary-soft: rgba(16, 185, 129, 0.14);
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --accent: #fbbf24;
+      --accent-soft: rgba(251, 191, 36, 0.14);
+      --accent-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      --danger: #f87171;
+      --danger-soft: rgba(248, 113, 113, 0.14);
+      --info: #60a5fa;
+      --info-soft: rgba(96, 165, 250, 0.14);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+      --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.4);
+      --shadow-primary: 0 8px 32px rgba(16, 185, 129, 0.4);
+    }
+
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: var(--bg);
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--text);
+      overflow-x: hidden;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      overscroll-behavior-y: contain;
+      position: relative;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    ::selection { background: var(--primary); color: white; }
+
+    /* STICKY DEMO BANNER */
+    .demo-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .demo-banner-text { display: flex; align-items: center; gap: 8px; }
+    .demo-banner-text .pill { background: var(--accent); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 900; letter-spacing: 0.05em; }
+    .demo-banner-btn {
+      background: var(--primary-gradient); color: white; border: none; padding: 6px 12px;
+      border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 800; cursor: pointer;
+      text-decoration: none; display: flex; align-items: center; gap: 4px;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      display: none;
+    }
+    body.dark .ambient-glow { display: block; }
+    .ambient-glow::before {
+      content: '';
+      position: absolute;
+      top: -40%; left: -20%;
+      width: 80%; height: 80%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 70%);
+    }
+    .ambient-glow::after {
+      content: '';
+      position: absolute;
+      bottom: -30%; right: -20%;
+      width: 70%; height: 70%;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.06), transparent 70%);
+    }
+
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .sidebar-backdrop.visible { opacity: 1; visibility: visible; }
+
+    .app-sidebar {
+      position: fixed;
+      left: 0;
+      top: 44px; /* Offset for banner */
+      bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0 20px;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+      overflow-y: auto;
+    }
+    .app-sidebar.sidebar-hidden { transform: translateX(-100%); }
+
+    .app-sidebar .logo {
+      width: 42px;
+      height: 42px;
+      background: var(--primary-gradient);
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: white;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: var(--transition-spring);
+      box-shadow: var(--shadow-primary);
+      flex-shrink: 0;
+    }
+    .app-sidebar .logo:hover { transform: scale(1.08) rotate(-3deg); }
+
+    .sidebar-close-btn {
+      position: absolute;
+      top: 8px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: var(--danger-soft);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s;
+      outline: none;
+      font-family: inherit;
+      z-index: 10;
+    }
+    .sidebar-close-btn:hover, .sidebar-close-btn:active {
+      background: var(--danger);
+      color: white;
+      transform: rotate(90deg) scale(1.05);
+    }
+
+    .app-sidebar .nav-icons {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      width: 100%;
+      padding: 0 8px;
+      align-items: center;
+    }
+    .app-sidebar .nav-icons button {
+      background: transparent;
+      border: none;
+      border-radius: 13px;
+      padding: 10px 0;
+      width: 100%;
+      color: var(--text-3);
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      outline: none;
+      font-family: inherit;
+    }
+    .app-sidebar .nav-icons button .nav-icon-emoji { font-size: 1.1rem; line-height: 1; }
+    .app-sidebar .nav-icons button .nav-icon-label {
+      font-size: 0.52rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      opacity: 0;
+      transition: var(--transition);
+      text-transform: uppercase;
+    }
+    .app-sidebar .nav-icons button.active {
+      color: white;
+      background: var(--primary-gradient);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    }
+    .app-sidebar .nav-icons button.active .nav-icon-label { opacity: 1; }
+    .app-sidebar .nav-icons button:hover:not(.active) {
+      color: var(--text);
+      background: var(--surface-3);
+    }
+    .app-sidebar .nav-icons button:hover:not(.active) .nav-icon-label { opacity: 1; }
+
+    .app-sidebar .sidebar-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--divider);
+      width: 60%;
+      flex-shrink: 0;
+    }
+    .app-sidebar .sidebar-footer .theme-toggle-btn {
+      background: var(--surface-3);
+      border: none;
+      color: var(--text-2);
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 9px;
+      border-radius: 11px;
+      transition: var(--transition);
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+    }
+    .app-sidebar .sidebar-footer .theme-toggle-btn:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      transform: scale(1.05);
+    }
+
+    .floating-menu-btn {
+      position: fixed;
+      top: 56px; /* Offset for banner */
+      left: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      z-index: 1001;
+      outline: none;
+      font-family: inherit;
+    }
+    .floating-menu-btn.visible { display: flex; }
+    .floating-menu-btn:hover { transform: scale(1.05); background: var(--surface-3); }
+
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding: 60px 24px 100px; /* Offset for banner */
+      max-width: 720px;
+      transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
+    }
+    body.sidebar-closed .main-content {
+      margin-left: 0;
+      padding-left: 24px;
+    }
+    body.sidebar-closed .sticky-header .greeting { padding-left: 56px; }
+
+    .sticky-header {
+      position: sticky;
+      top: 44px; /* Offset for banner */
+      z-index: 100;
+      background: var(--bg);
+      padding: 8px 0 14px;
+      margin: -8px 0 14px;
+      border-bottom: 1px solid var(--divider);
+    }
+    .sticky-header .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sticky-header .greeting {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: padding-left 0.35s;
+      min-width: 0;
+      flex: 1;
+    }
+    .sticky-header .greeting h1 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .sticky-header .greeting h1 .highlight {
+      background: var(--primary-gradient);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .sticky-header .greeting .app-logo-sm {
+      font-size: 1.15rem;
+      width: 34px;
+      height: 34px;
+      background: var(--primary-gradient);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-primary);
+      flex-shrink: 0;
+      color: white;
+    }
+    #headerBusinessName {
+      font-weight: 800;
+      color: var(--text);
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: none;
+    }
+    body.has-business #headerBusinessName { display: inline-block; }
+    body.has-business #headerBrandText { display: none; }
+
+    #headerAgreementName {
+      font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer;
+      border-bottom: 2px dashed var(--accent);
+      padding: 0 4px;
+      transition: var(--transition);
+      display: inline-block;
+      font-size: 0.9rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #headerAgreementName:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 6px;
+    }
+
+    .section { display: none; }
+    .section.active {
+      display: block;
+      animation: sectionFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes sectionFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 1.35rem 1.35rem 1.5rem;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover { box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      opacity: 0.4;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding-bottom: 4px;
+      gap: 10px;
+    }
+    .card-header h2 {
+      font-size: 0.92rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      flex-wrap: wrap;
+    }
+    .card-header h2 .card-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-radius: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .card-header .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .card-header .toggle-icon {
+      font-size: 0.7rem;
+      color: var(--text-3);
+      transition: transform 0.3s;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: var(--surface-3);
+      cursor: pointer;
+    }
+    .card-body { margin-top: 1rem; }
+    .card.collapsed .card-body { display: none; }
+    .card.collapsed .toggle-icon { transform: rotate(-90deg); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 18, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.2s ease, visibility 0.2s;
+      pointer-events: none;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-xl);
+      padding: 32px 28px 28px;
+      max-width: 440px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-xl);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s;
+      opacity: 0;
+      position: relative;
+    }
+    .modal-overlay.active .modal-card { transform: scale(1); opacity: 1; }
+    .modal-card .modal-close-btn {
+      position: sticky;
+      top: 0;
+      float: right;
+      background: var(--surface-3);
+      border: none;
+      border-radius: 12px;
+      width: 34px;
+      height: 34px;
+      font-size: 0.95rem;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      z-index: 10;
+      outline: none;
+      font-family: inherit;
+    }
+    .modal-card .modal-close-btn:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+      transform: rotate(90deg);
+    }
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: var(--text);
+      clear: both;
+      letter-spacing: -0.02em;
+    }
+    .modal-sub {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+    .modal-buttons { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-buttons button { margin-top: 0; padding: 11px; font-size: 0.85rem; flex: 1; }
+
+    .form-group { margin-bottom: 0.9rem; }
+    label {
+      font-weight: 600;
+      font-size: 0.68rem;
+      color: var(--text-2);
+      margin-bottom: 5px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    input, select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+      transition: var(--transition);
+      font-family: inherit;
+      -webkit-appearance: none;
+      appearance: none;
+      font-weight: 500;
+    }
+    input::placeholder { color: var(--text-3); font-weight: 400; }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      background: var(--bg-elevated);
+      box-shadow: 0 0 0 4px var(--primary-soft);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+    .row-2col { display: flex; gap: 10px; flex-wrap: nowrap; }
+    .row-2col .form-group { flex: 1; min-width: 0; }
+
+    button {
+      background: var(--primary-gradient);
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.15s;
+      letter-spacing: -0.01em;
+      outline: none;
+      font-family: inherit;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+    button:active { transform: scale(0.98); }
+    button.outline {
+      background: transparent;
+      border: 1.5px solid var(--border-strong);
+      color: var(--text);
+      box-shadow: none;
+    }
+    button.outline:hover {
+      background: var(--surface-3);
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 4px 12px var(--primary-soft);
+    }
+    button.warning { background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+    button.small-btn { padding: 8px 14px; font-size: 0.75rem; width: auto; margin-top: 0; border-radius: var(--radius-full); }
+    button.pdf-btn {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .history-table {
+      overflow-x: auto;
+      margin-top: 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th, td {
+      padding: 11px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--divider);
+      color: var(--text);
+      white-space: nowrap;
+    }
+    th {
+      color: var(--text-2);
+      font-weight: 700;
+      font-size: 0.64rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--surface-3);
+      position: sticky;
+      top: 0;
+    }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--primary-soft); }
+    td { font-variant-numeric: tabular-nums; }
+
+    .result-panel {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin: 14px 0;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .result-panel > div {
+      margin-bottom: 5px;
+      color: var(--text-2);
+      font-size: 0.82rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+    }
+    .result-panel > div strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .balance-display {
+      background: var(--primary-gradient);
+      color: white !important;
+      padding: 16px;
+      border-radius: var(--radius);
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-top: 12px;
+      transition: background 0.4s, box-shadow 0.4s;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      text-align: center;
+      display: block !important;
+    }
+    .balance-display.zero-balance {
+      background: var(--accent-gradient);
+      box-shadow: 0 8px 32px rgba(245, 158, 11, 0.5);
+      color: #1a1a1a !important;
+    }
+
+    .reminder-card {
+      background: linear-gradient(135deg, var(--accent-soft), rgba(245, 158, 11, 0.05));
+      border-left: 4px solid var(--accent);
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      margin-top: 10px;
+      font-size: 0.87rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .reminder-card strong { color: var(--text); font-weight: 700; }
+    .reminder-warning { color: var(--danger); font-weight: 700; }
+
+    .customers-summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .customers-summary-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: center; }
+    .customers-summary-card .cs-label { font-size: 0.64rem; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .customers-summary-card .cs-value { font-size: 1.15rem; font-weight: 900; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+    .customers-summary-card.cs-contract .cs-value { color: var(--text); }
+    .customers-summary-card.cs-paid .cs-value { color: var(--primary); }
+    .customers-summary-card.cs-outstanding .cs-value { color: var(--accent); }
+    .customers-summary-card.cs-count .cs-value { color: var(--info); }
+
+    .customers-filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .customers-filter-btn {
+      padding: 8px 16px; border-radius: var(--radius-full); border: 1.5px solid var(--border-strong);
+      background: transparent; color: var(--text-2); font-size: 0.75rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; font-family: inherit; width: auto; margin: 0; box-shadow: none;
+    }
+    .customers-filter-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); transform: none; box-shadow: none; }
+    .customers-filter-btn.active { background: var(--primary-gradient); border-color: transparent; color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+
+    .customers-sort-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.75rem; color: var(--text-2); }
+    .customers-sort-row label { margin: 0; font-size: 0.68rem; color: var(--text-3); }
+    .customers-sort-row select { flex: 1; padding: 9px 12px; font-size: 0.78rem; border-radius: var(--radius-full); background: var(--surface-2); }
+
+    .customer-row {
+      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px;
+      padding: 14px 16px; background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .customer-row:hover { border-color: var(--primary); background: var(--primary-soft); transform: translateX(2px); }
+    .customer-row.is-complete { border-left: 3px solid var(--primary); }
+    .customer-row.is-overdue { border-left: 3px solid var(--danger); }
+
+    .customer-info { min-width: 0; }
+    .customer-name { font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.01em; }
+    .customer-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 0.7rem; color: var(--text-3); font-weight: 600; }
+    .customer-meta .meta-item { display: inline-flex; align-items: center; gap: 3px; }
+    .customer-meta .meta-item strong { color: var(--text-2); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .customer-balance { text-align: right; flex-shrink: 0; }
+    .customer-balance .cb-label { font-size: 0.58rem; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+    .customer-balance .cb-value { font-size: 0.98rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+    .customer-balance .cb-value.is-outstanding { color: var(--accent); }
+    .customer-balance .cb-value.is-complete { color: var(--primary); }
+    .customer-balance .cb-value.is-overdue { color: var(--danger); }
+
+    .customers-empty { text-align: center; padding: 40px 20px; color: var(--text-2); }
+    .customers-empty .ce-icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.5; }
+    .customers-empty .ce-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: var(--text); }
+    .customers-empty .ce-desc { font-size: 0.78rem; color: var(--text-3); line-height: 1.5; }
+
+    .today-collections-card {
+      background: linear-gradient(135deg, var(--primary-gradient));
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      color: #ffffff !important;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .today-collections-card * { color: #ffffff !important; }
+    .today-collections-card::before {
+      content: '';
+      position: absolute;
+      top: -50%; right: -30%;
+      width: 70%; height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent 60%);
+      pointer-events: none;
+    }
+    .today-collections-card.has-overdue { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4); }
+    .today-collections-card.all-clear { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .tc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; position: relative; z-index: 1; }
+    .tc-title { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.95; display: flex; align-items: center; gap: 6px; }
+    .tc-date { font-size: 0.68rem; font-weight: 600; opacity: 0.9; }
+    .tc-main { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; position: relative; z-index: 1; }
+    .tc-count { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+    .tc-label { font-size: 0.82rem; font-weight: 700; opacity: 0.95; line-height: 1.3; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+    .tc-sub { font-size: 0.78rem; font-weight: 600; opacity: 0.95; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; }
+    .tc-sub .tc-chip { background: rgba(255, 255, 255, 0.25); padding: 3px 10px; border-radius: var(--radius-full); font-weight: 800; font-size: 0.72rem; backdrop-filter: blur(4px); }
+    .tc-sub .tc-chip.overdue-chip { background: rgba(255, 255, 255, 0.35); }
+    .tc-action {
+      margin-top: 14px; background: rgba(255, 255, 255, 0.98); color: #059669 !important;
+      padding: 11px 16px; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 800;
+      border: none; width: auto; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      position: relative; z-index: 1; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); transition: transform 0.15s; font-family: inherit;
+    }
+    .today-collections-card.has-overdue .tc-action { color: #dc2626 !important; }
+    .tc-action:hover { transform: translateY(-2px); }
+
+    .contact-badge {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+      border-radius: var(--radius-full); font-size: 0.62rem; font-weight: 700;
+      text-decoration: none; transition: all 0.15s; white-space: nowrap;
+    }
+    .contact-badge.phone { background: var(--info-soft); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.2); }
+    .contact-badge.phone:hover { background: var(--info); color: white; }
+    .contact-badge.guarantor { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(245, 158, 11, 0.25); }
+    .contact-badge.guarantor:hover { background: var(--accent); color: white; }
+
+    .reminder-contact-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--divider); }
+    .reminder-contact-row .rc-label { font-size: 0.68rem; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; width: 100%; margin-bottom: 2px; }
+
+    .about-card {
+      background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft));
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 22px 18px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .about-logo { width: 68px; height: 68px; background: var(--primary-gradient); border-radius: 19px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.9rem; color: white; margin-bottom: 12px; box-shadow: var(--shadow-primary); }
+    .about-title { font-size: 1.3rem; font-weight: 900; letter-spacing: -0.03em; color: var(--text); margin-bottom: 4px; }
+    .about-version { font-size: 0.72rem; font-weight: 600; color: var(--text-2); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 12px; }
+    .about-license-badge { display: inline-block; background: var(--primary-gradient); color: #fff; padding: 7px 18px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); margin-bottom: 12px; }
+    .about-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; text-align: left; }
+    .about-feature { background: var(--bg-elevated); padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 0.72rem; font-weight: 600; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+    .about-feature .feat-icon { font-size: 0.95rem; }
+    .about-tagline { font-size: 0.76rem; color: var(--text-2); line-height: 1.6; padding: 0 8px; }
+
+    footer { text-align: center; font-size: 0.68rem; margin-top: 20px; color: var(--text-3); letter-spacing: 0.04em; padding-bottom: 20px; font-weight: 500; }
+
+    .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 16000; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .toast {
+      background: var(--bg-elevated); color: var(--text); padding: 12px 22px; border-radius: var(--radius-full);
+      font-size: 0.82rem; font-weight: 600; box-shadow: var(--shadow-xl); border: 1px solid var(--border);
+      pointer-events: auto; max-width: 90vw; text-align: center; animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    @media (max-width: 640px) {
+      :root { --sidebar-width: 62px; }
+      .main-content { padding: 60px 16px 100px; max-width: 100%; }
+      body.sidebar-closed .main-content { padding-left: 16px; }
+      .sticky-header { padding: 6px 0 12px; margin: -6px 0 12px; top: 44px; }
+      .sticky-header .greeting h1 { font-size: 0.98rem; }
+      .sticky-header .greeting .app-logo-sm { width: 32px; height: 32px; font-size: 1.05rem; }
+      #headerAgreementName { font-size: 0.85rem; }
+      #headerBusinessName { font-size: 0.95rem; }
+      .card { padding: 1.15rem 1.15rem 1.25rem; border-radius: var(--radius); margin-bottom: 14px; }
+      .card-header h2 { font-size: 0.88rem; }
+      .card-header h2 .card-icon { width: 28px; height: 28px; font-size: 0.85rem; }
+      .row-2col { flex-wrap: wrap; }
+      .row-2col .form-group { flex: 1 1 100%; }
+      .balance-display { font-size: 1.35rem; padding: 14px; }
+      .modal-card { padding: 26px 20px; max-width: 95%; }
+      .toast-container { bottom: 80px; }
+      table { font-size: 0.72rem; }
+      th, td { padding: 9px 8px; }
+      .about-features { grid-template-columns: 1fr; }
+      .customers-summary-grid { gap: 8px; }
+      .customers-summary-card { padding: 12px 10px; }
+      .customers-summary-card .cs-value { font-size: 1rem; }
+      .today-collections-card { padding: 16px 18px; }
+      .tc-count { font-size: 2rem; }
+      .tc-label { font-size: 0.78rem; }
+      .tc-sub { font-size: 0.72rem; }
+      .tc-sub .tc-chip { font-size: 0.66rem; padding: 2px 8px; }
+    }
+
+    @media (max-width: 400px) {
+      .modal-card .modal-close-btn { width: 30px; height: 30px; font-size: 0.9rem; }
+      .sticky-header .top-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+      .floating-menu-btn { width: 40px; height: 40px; font-size: 1.05rem; top: 56px; left: 10px; }
+      body.sidebar-closed .sticky-header .greeting { padding-left: 52px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+  </style>
+</head>
+<body>
+
+  <!-- STICKY SALES BANNER -->
+  <div class="demo-banner">
+    <div class="demo-banner-text">
+      <span class="pill">DEMO</span>
+      <span>You are viewing a read-only preview.</span>
+    </div>
+    <a href="https://selar.com/playplan-ledger" target="_blank" rel="noopener" class="demo-banner-btn">
+      Buy Full Version →
+    </a>
+  </div>
+
+  <div class="ambient-glow"></div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+  <button class="floating-menu-btn" id="floatingMenuBtn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <div id="mainAppContainer" style="display:none;">
+
+    <nav class="app-sidebar" id="appSidebar">
+      <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Close menu">✕</button>
+      <div class="logo" id="sidebarLogo" onclick="switchSection('dashboard')">💼</div>
+      <div class="nav-icons">
+        <button class="active" data-section="dashboard" onclick="switchSection('dashboard')">
+          <span class="nav-icon-emoji">📊</span>
+          <span class="nav-icon-label">Home</span>
+        </button>
+        <button data-section="agreements" onclick="switchSection('agreements')">
+          <span class="nav-icon-emoji">📋</span>
+          <span class="nav-icon-label">Plans</span>
+        </button>
+        <button data-section="customers" onclick="switchSection('customers')">
+          <span class="nav-icon-emoji">👥</span>
+          <span class="nav-icon-label">Customers</span>
+        </button>
+        <button data-section="payment" onclick="switchSection('payment')">
+          <span class="nav-icon-emoji">💳</span>
+          <span class="nav-icon-label">Pay</span>
+        </button>
+        <button data-section="history" onclick="switchSection('history')">
+          <span class="nav-icon-emoji">📜</span>
+          <span class="nav-icon-label">History</span>
+        </button>
+        <button data-section="pdf" onclick="switchSection('pdf')">
+          <span class="nav-icon-emoji">📊</span>
+          <span class="nav-icon-label">Reports</span>
+        </button>
+        <button data-section="settings" onclick="switchSection('settings')">
+          <span class="nav-icon-emoji">⚙️</span>
+          <span class="nav-icon-label">Settings</span>
+        </button>
+      </div>
+      <div class="sidebar-footer">
+        <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+      </div>
+    </nav>
+
+    <div class="main-content">
+
+      <div class="sticky-header">
+        <div class="top-bar">
+          <div class="greeting">
+            <span class="app-logo-sm" id="headerLogoIcon">💼</span>
+            <h1>
+              <span id="headerBusinessName">Demo Business</span>
+              <span id="headerBrandText"><span class="highlight">PayPlan Ledger</span></span>
+              <span id="headerAgreementName">— Select</span>
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div class="section active" id="section-dashboard">
+        <div class="today-collections-card" id="todayCollectionsCard">
+          <div class="tc-header">
+            <div class="tc-title"><span>📅</span> Today's Collections</div>
+            <div class="tc-date" id="tcDate">—</div>
+          </div>
+          <div class="tc-main">
+            <div class="tc-count" id="tcCount">0</div>
+            <div class="tc-label" id="tcLabel">payments<br>due today</div>
+          </div>
+          <div class="tc-sub" id="tcSub"></div>
+          <button class="tc-action" id="tcAction" style="display:none;">View customers →</button>
+        </div>
+
+        <div class="card" id="card-dashboard-overview">
+          <div class="card-header">
+            <h2><span class="card-icon">📈</span> Overview</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="dashboardSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px;">
+              <div style="background:var(--surface-2);padding:18px 14px;border-radius:var(--radius);text-align:center;border:1px solid var(--border);">
+                <div style="font-size:0.66rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Plans</div>
+                <div style="font-size:1.7rem;font-weight:900;color:var(--primary);letter-spacing:-0.03em;font-variant-numeric:tabular-nums;" id="dashTotalAgreements">0</div>
+              </div>
+              <div style="background:var(--surface-2);padding:18px 14px;border-radius:var(--radius);text-align:center;border:1px solid var(--border);">
+                <div style="font-size:0.66rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Total Paid</div>
+                <div style="font-size:1.4rem;font-weight:900;color:var(--accent);letter-spacing:-0.03em;font-variant-numeric:tabular-nums;" id="dashTotalPaid">$0</div>
+              </div>
+              <div style="background:var(--surface-2);padding:18px 14px;border-radius:var(--radius);text-align:center;border:1px solid var(--border);">
+                <div style="font-size:0.66rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Active</div>
+                <div style="font-size:1.7rem;font-weight:900;color:var(--info);letter-spacing:-0.03em;font-variant-numeric:tabular-nums;" id="dashActiveAgreements">0</div>
+              </div>
+            </div>
+            <div style="text-align:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);color:var(--text-2);font-size:0.85rem;font-weight:600;border:1px solid var(--border);">
+              <span id="dashCurrentAgreement">No agreement selected</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="card-dashboard-reminders">
+          <div class="card-header">
+            <h2><span class="card-icon">⏰</span> Reminders</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="reminderDisplay" class="reminder-card"><p>Set a schedule to see payment reminders.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGREEMENTS -->
+      <div class="section" id="section-agreements">
+        <div class="card" id="card-agreements">
+          <div class="card-header">
+            <h2><span class="card-icon">📋</span> Your Agreements</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="agreementsList"></div>
+            <button class="outline small-btn" style="width:auto;margin-top:8px;" onclick="redirectToProduct('add agreement')">➕ New Agreement</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="section" id="section-customers">
+        <div class="card" id="card-customers-summary">
+          <div class="card-header">
+            <h2><span class="card-icon">📊</span> Business Snapshot</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="customers-summary-grid">
+              <div class="customers-summary-card cs-count">
+                <div class="cs-label">Customers</div>
+                <div class="cs-value" id="csTotalCustomers">0</div>
+              </div>
+              <div class="customers-summary-card cs-contract">
+                <div class="cs-label">Total Contract</div>
+                <div class="cs-value" id="csTotalContract">$0</div>
+              </div>
+              <div class="customers-summary-card cs-paid">
+                <div class="cs-label">Total Paid</div>
+                <div class="cs-value" id="csTotalPaid">$0</div>
+              </div>
+              <div class="customers-summary-card cs-outstanding">
+                <div class="cs-label">Outstanding</div>
+                <div class="cs-value" id="csTotalOutstanding">$0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="card-customers-list">
+          <div class="card-header">
+            <h2><span class="card-icon">👥</span> All Customers</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="search-wrap">
+              <div class="search-text-input">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="customersSearchInput" placeholder="Search by name or phone..." />
+              </div>
+              <button class="search-clear-btn" id="customersSearchClearBtn">✕ Clear</button>
+            </div>
+
+            <!-- Default filter is set to 'Overdue' to show off the app's value immediately -->
+            <div class="customers-filter-row" id="customersFilterRow">
+              <button class="customers-filter-btn" data-filter="all">All</button>
+              <button class="customers-filter-btn" data-filter="active">Active</button>
+              <button class="customers-filter-btn" data-filter="completed">Completed</button>
+              <button class="customers-filter-btn active" data-filter="overdue">Overdue</button>
+            </div>
+
+            <div class="customers-sort-row">
+              <label for="customersSortSelect">Sort by</label>
+              <select id="customersSortSelect">
+                <option value="balance-desc">Balance (highest first)</option>
+                <option value="balance-asc">Balance (lowest first)</option>
+                <option value="name-asc">Name (A → Z)</option>
+                <option value="name-desc">Name (Z → A)</option>
+                <option value="contract-desc">Contract (highest first)</option>
+                <option value="paid-desc">Paid (highest first)</option>
+              </select>
+            </div>
+
+            <div id="customersList"></div>
+
+            <button class="pdf-btn" style="margin-top:14px;" onclick="handlePortfolioPDF()">📥 Portfolio PDF</button>
+            <p style="font-size:0.7rem;margin-top:10px;color:var(--text-3);line-height:1.6;text-align:center;">
+              Download a PDF portfolio of all customers<br>
+              <span style="color:var(--primary);font-weight:700;">Works in the demo</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYMENT -->
+      <div class="section" id="section-payment">
+        <div class="card" id="card-payment">
+          <div class="card-header">
+            <h2><span class="card-icon">💳</span> <span id="currentAgreementNameDisplay">Select Agreement</span></h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="paymentPartyInfo" style="display:none;margin-bottom:12px;"></div>
+            <div class="form-group">
+              <label>📅 Payment Date</label>
+              <input type="date" id="workDate" />
+            </div>
+            <div class="row-2col">
+              <div class="form-group">
+                <label>🏷️ Total Contract</label>
+                <input type="number" id="totalHireAmount" step="any" placeholder="0.00" />
+              </div>
+              <div class="form-group">
+                <label>💵 Amount Paid</label>
+                <input type="number" id="amountPaid" step="any" placeholder="0.00" />
+              </div>
+            </div>
+            <div class="result-panel">
+              <div>🏷️ Contract Amount <strong id="totalHireDisplay">0</strong></div>
+              <div>✅ Total Paid <strong id="totalPaidDisplay">0</strong></div>
+              <div class="balance-display" id="balancePreview">Balance: —</div>
+            </div>
+            <button id="saveRecordBtn" onclick="redirectToProduct('save payment')">💾 Save Payment</button>
+            <button class="outline small-btn" style="width:auto;margin-top:8px;" onclick="redirectToProduct('reset form')">↩ Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="section" id="section-history">
+        <div class="card" id="card-history">
+          <div class="card-header">
+            <h2><span class="card-icon">📜</span> Payment History</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="search-wrap">
+              <div class="search-text-input">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchHistoryInput" placeholder="Search payments..." />
+              </div>
+              <div class="date-range">
+                <input type="date" id="searchDateFrom" title="From" />
+                <input type="date" id="searchDateTo" title="To" />
+              </div>
+              <button class="search-clear-btn" id="searchClearBtn">✕ Clear</button>
+            </div>
+            <div class="history-table">
+              <table>
+                <thead><tr><th>Date</th><th>Contract</th><th>Paid</th><th>Total</th><th>Balance</th><th></th></tr></thead>
+                <tbody id="historyBody"><tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:28px;">Select an agreement</td></tr></tbody>
+              </table>
+            </div>
+            <div id="summaryStats" class="total-summary" style="background:var(--surface-2);border-radius:var(--radius);padding:14px 18px;margin-top:14px;font-weight:700;display:flex;justify-content:space-between;font-size:0.85rem;border:1px solid var(--border);">
+              <span>Total Paid: 0</span><span>Remaining: 0</span>
+            </div>
+            <button class="warning small-btn" style="width:auto;margin-top:12px;" onclick="redirectToProduct('clear history')">🗑️ Clear All History</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF -->
+      <div class="section" id="section-pdf">
+        <div class="card" id="card-pdf">
+          <div class="card-header">
+            <h2><span class="card-icon">📊</span> PDF Reports</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row-2col">
+              <div class="form-group"><label>Start Date</label><input type="date" id="reportStartDate" /></div>
+              <div class="form-group"><label>End Date</label><input type="date" id="reportEndDate" /></div>
+            </div>
+            <div class="range-buttons">
+              <button class="outline small-btn" onclick="setToday()">Today</button>
+              <button class="outline small-btn" onclick="setThisWeek()">This Week</button>
+              <button class="outline small-btn" onclick="setThisMonth()">This Month</button>
+            </div>
+            <button class="pdf-btn" style="margin-top:14px;" onclick="handleDownloadFull()">📥 Full History PDF</button>
+            <button class="pdf-btn" onclick="handleDownloadRange()">📅 Date Range PDF</button>
+            <p style="font-size:0.7rem;margin-top:10px;color:var(--text-3);line-height:1.6;text-align:center;">
+              PDF reports generate directly in your browser<br>
+              <span style="color:var(--primary);font-weight:700;">Works in the demo</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="section" id="section-settings">
+
+        <div class="card" id="card-settings-business">
+          <div class="card-header">
+            <h2><span class="card-icon">🏢</span> Business Identity</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:12px;line-height:1.6;">
+              Add your logo and business name. They appear in the header, sidebar, and on every PDF you generate.
+            </p>
+
+            <div class="logo-upload-row" style="display:flex;align-items:center;gap:14px;padding:12px 0;margin-bottom:6px;">
+              <div class="logo-preview" id="businessLogoPreview" style="width:64px;height:64px;border-radius:16px;background:var(--primary-gradient);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:white;flex-shrink:0;box-shadow:var(--shadow-primary);overflow:hidden;border:2px solid var(--border);">💼</div>
+              <div class="logo-upload-actions" style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <button type="button" class="outline small-btn" onclick="redirectToProduct('upload logo')" style="justify-content:flex-start;">🖼️ Upload Logo</button>
+                <div class="logo-upload-hint" style="font-size:0.68rem;color:var(--text-3);line-height:1.5;">PNG or JPG. Square works best. Stored on this device only.</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>🏢 Business Name</label>
+              <input type="text" id="businessNameInput" placeholder="e.g. Mensah Motors, Kumasi" maxlength="60">
+            </div>
+            <div class="row-2col">
+              <div class="form-group">
+                <label>📞 Business Phone</label>
+                <input type="tel" id="businessPhoneInput" placeholder="e.g. 024 123 4567">
+              </div>
+              <div class="form-group">
+                <label>📧 Business Email</label>
+                <input type="email" id="businessEmailInput" placeholder="e.g. info@mensahmotors.com">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>📍 Business Address</label>
+              <input type="text" id="businessAddressInput" placeholder="e.g. Adum, Kumasi" maxlength="100">
+            </div>
+            <button class="outline small-btn" style="width:auto;" onclick="saveBusinessInfoRedirect()">💾 Save Business Info</button>
+          </div>
+        </div>
+
+        <div class="card" id="card-settings-main">
+          <div class="card-header">
+            <h2><span class="card-icon">⚙️</span> Preferences</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>💱 Currency Symbol</label>
+              <select id="currencySelect">
+                <option value="$">$ US Dollar (USD)</option>
+                <option value="€">€ Euro (EUR)</option>
+                <option value="£">£ British Pound (GBP)</option>
+                <option value="₦">₦ Nigerian Naira (NGN)</option>
+                <option value="₵">₵ Ghana Cedi (GHS)</option>
+                <option value="¥">¥ Japanese Yen (JPY)</option>
+                <option value="₹">₹ Indian Rupee (INR)</option>
+                <option value="R">R South African Rand (ZAR)</option>
+                <option value="KSh">KSh Kenyan Shilling (KES)</option>
+                <option value="AED">AED UAE Dirham</option>
+                <option value="C$">C$ Canadian Dollar</option>
+                <option value="A$">A$ Australian Dollar</option>
+              </select>
+            </div>
+            <button class="outline small-btn" style="width:auto;" onclick="saveCurrencyRedirect()">💾 Apply Currency</button>
+          </div>
+        </div>
+
+        <div class="card" id="card-settings-schedule">
+          <div class="card-header">
+            <h2><span class="card-icon">⏰</span> Payment Schedule</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row-2col">
+              <div class="form-group"><label>📅 Next Due</label><input type="date" id="nextDueDate" /></div>
+              <div class="form-group"><label>💰 Installment</label><input type="number" id="installmentAmount" step="any" placeholder="0.00" /></div>
+            </div>
+            <div class="form-group">
+              <label>🔄 Frequency</label>
+              <select id="frequencySelect">
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <button class="outline small-btn" style="width:auto;" onclick="redirectToProduct('save schedule')">💾 Save Schedule</button>
+          </div>
+        </div>
+
+        <div class="card" id="card-settings-manual">
+          <div class="card-header">
+            <h2><span class="card-icon">💾</span> Manual Backup</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:10px;line-height:1.6;">
+              Export your data to a file. Use it to restore on a new device.
+            </p>
+            <button class="outline small-btn" style="width:auto;" onclick="redirectToProduct('export backup')">📤 Export Backup</button>
+          </div>
+        </div>
+
+        <div class="card" id="card-settings-recovery">
+          <div class="card-header">
+            <h2><span class="card-icon">🔄</span> Data Recovery</h2>
+            <div class="header-actions">
+              <span class="toggle-icon" onclick="event.stopPropagation();this.closest('.card').classList.toggle('collapsed')">▼</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:10px;line-height:1.6;">
+              Generate a recovery code to restore your data on any device. <strong>Keep this code safe!</strong>
+            </p>
+            <button class="gold-btn small-btn" style="width:auto;margin-top:12px;background:var(--accent-gradient);color:#1a1a1a;border:none;padding:9px 14px;border-radius:var(--radius-full);font-weight:800;font-size:0.75rem;cursor:pointer;" onclick="redirectToProduct('generate recovery code')">🔑 Generate Recovery Code</button>
+            <hr style="margin:16px 0;border:none;border-top:1px solid var(--divider);">
+            <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:10px;line-height:1.6;">
+              Already have a recovery code and password? Restore your data on any device.
+            </p>
+            <button class="outline small-btn" style="width:auto;" onclick="redirectToProduct('restore from code')">🔄 Restore from Code</button>
+          </div>
+        </div>
+
+        <!-- DEMO RESET -->
+        <div class="card" id="card-settings-reset" style="border-color:var(--border);">
+          <div class="card-header">
+            <h2><span class="card-icon" style="background:var(--danger-soft);color:var(--danger);">♻️</span> Demo Controls</h2>
+          </div>
+          <div class="card-body">
+            <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:10px;line-height:1.6;">
+              Click below to reset the demo data to its original state.
+            </p>
+            <button class="outline small-btn" style="width:auto;border-color:var(--border-strong);color:var(--text);" onclick="resetDemoData()">♻️ Reset Demo Data</button>
+          </div>
+        </div>
+
+        <div class="about-card">
+          <div class="about-logo" id="aboutLogoIcon">💼</div>
+          <div class="about-title" id="aboutTitle">PayPlan Ledger — Demo</div>
+          <div class="about-version">Read‑only preview</div>
+          <div class="about-license-badge">Demo Mode</div>
+          <p class="about-tagline">This is a demonstration. Buy the full app on Selar to unlock all features.</p>
+          <div style="margin-top:16px;">
+            <a href="https://selar.com/playplan-ledger" target="_blank" rel="noopener" style="display:inline-block;background:var(--primary-gradient);color:white;padding:12px 28px;border-radius:var(--radius-full);font-weight:800;font-size:0.9rem;text-decoration:none;box-shadow:0 8px 24px rgba(16,185,129,0.4);">🛒 Buy Full Version on Selar</a>
+          </div>
+        </div>
+      </div>
+
+      <footer>PAYPLAN LEDGER v15.6 • DEMO • BUY FULL VERSION ON SELAR</footer>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    // ============================================================
+    //  DEMO SCRIPT
+    // ============================================================
+
+    const PRODUCT_URL = 'https://selar.com/playplan-ledger';
+
+    // ---------- Demo data (20 agreements) ----------
+    const demoAgreements = {
+      "a1": {
+        name: "Toyota Corolla 2019",
+        records: [
+          { id: 1, date: "2024-01-05", totalHireAmount: 45000, amountPaid: 5000 },
+          { id: 2, date: "2024-02-03", totalHireAmount: 45000, amountPaid: 4500 },
+          { id: 3, date: "2024-03-02", totalHireAmount: 45000, amountPaid: 4500 },
+          { id: 4, date: "2024-04-06", totalHireAmount: 45000, amountPaid: 4500 },
+          { id: 5, date: "2024-05-04", totalHireAmount: 45000, amountPaid: 4500 }
+        ],
+        totalHireAmount: 45000,
+        schedule: { nextDueDate: "2024-06-01", installmentAmount: 4500, frequency: "monthly" },
+        party: {
+          customer: { name: "Kofi Mensah", phone: "024 123 4567", address: "Accra, Madina Market", id: "GHA-123456789" },
+          guarantor: { name: "Ama Boateng", phone: "020 987 6543", address: "Tema Community 4", relationship: "Uncle", id: "GHA-987654321" }
+        }
+      },
+      "a2": {
+        name: "Honda Civic 2020",
+        records: [
+          { id: 6, date: "2024-02-10", totalHireAmount: 62000, amountPaid: 8000 },
+          { id: 7, date: "2024-03-10", totalHireAmount: 62000, amountPaid: 7000 },
+          { id: 8, date: "2024-04-12", totalHireAmount: 62000, amountPaid: 7000 },
+          { id: 9, date: "2024-05-11", totalHireAmount: 62000, amountPaid: 7000 }
+        ],
+        totalHireAmount: 62000,
+        schedule: { nextDueDate: "2024-06-10", installmentAmount: 7000, frequency: "monthly" },
+        party: {
+          customer: { name: "Akosua Asante", phone: "055 234 5678", address: "Kumasi, Adum", id: "GHA-234567890" },
+          guarantor: { name: "Kwame Owusu", phone: "024 876 5432", address: "Kumasi, Bantama", relationship: "Brother", id: "GHA-876543210" }
+        }
+      },
+      "a3": {
+        name: "Samsung 55\" TV",
+        records: [
+          { id: 10, date: "2024-03-15", totalHireAmount: 8500, amountPaid: 1500 },
+          { id: 11, date: "2024-04-15", totalHireAmount: 8500, amountPaid: 1500 },
+          { id: 12, date: "2024-05-15", totalHireAmount: 8500, amountPaid: 1500 }
+        ],
+        totalHireAmount: 8500,
+        schedule: { nextDueDate: "2024-06-15", installmentAmount: 1500, frequency: "monthly" },
+        party: {
+          customer: { name: "Yaw Darko", phone: "026 345 6789", address: "Takoradi, Market Circle", id: "GHA-345678901" },
+          guarantor: { name: "Esi Amankwah", phone: "055 765 4321", address: "Takoradi, Beach Road", relationship: "Aunt", id: "GHA-765432109" }
+        }
+      },
+      "a4": {
+        name: "MacBook Pro M2",
+        records: [
+          { id: 13, date: "2024-01-20", totalHireAmount: 18000, amountPaid: 3000 },
+          { id: 14, date: "2024-02-20", totalHireAmount: 18000, amountPaid: 3000 },
+          { id: 15, date: "2024-03-20", totalHireAmount: 18000, amountPaid: 3000 },
+          { id: 16, date: "2024-04-20", totalHireAmount: 18000, amountPaid: 3000 },
+          { id: 17, date: "2024-05-20", totalHireAmount: 18000, amountPaid: 3000 }
+        ],
+        totalHireAmount: 18000,
+        schedule: { nextDueDate: "2024-06-20", installmentAmount: 3000, frequency: "monthly" },
+        party: {
+          customer: { name: "Adwoa Serwaa", phone: "024 456 7890", address: "Accra, East Legon", id: "GHA-456789012" },
+          guarantor: { name: "Kojo Appiah", phone: "020 654 3210", address: "Accra, Dansoman", relationship: "Friend", id: "GHA-654321098" }
+        }
+      },
+      "a5": {
+        name: "Land Cruiser Prado",
+        records: [
+          { id: 18, date: "2024-04-01", totalHireAmount: 120000, amountPaid: 15000 },
+          { id: 19, date: "2024-05-01", totalHireAmount: 120000, amountPaid: 15000 }
+        ],
+        totalHireAmount: 120000,
+        schedule: { nextDueDate: "2024-06-01", installmentAmount: 15000, frequency: "monthly" },
+        party: {
+          customer: { name: "Nana Adjei", phone: "027 567 8901", address: "Accra, Airport Residential", id: "GHA-567890123" },
+          guarantor: { name: "Ohemaa Agyeman", phone: "024 321 0987", address: "Accra, Labone", relationship: "Sister", id: "GHA-321098765" }
+        }
+      },
+      "a6": {
+        name: "iPhone 15 Pro Max",
+        records: [
+          { id: 20, date: "2024-05-05", totalHireAmount: 12000, amountPaid: 2000 },
+          { id: 21, date: "2024-05-19", totalHireAmount: 12000, amountPaid: 2000 }
+        ],
+        totalHireAmount: 12000,
+        schedule: { nextDueDate: "2024-06-05", installmentAmount: 2000, frequency: "monthly" },
+        party: {
+          customer: { name: "Kwesi Arthur", phone: "055 678 9012", address: "Tema, Community 25", id: "GHA-678901234" },
+          guarantor: { name: "Abena Osei", phone: "026 432 1098", address: "Tema, Community 1", relationship: "Mother", id: "GHA-432109876" }
+        }
+      },
+      "a7": {
+        name: "Honda Accord 2018",
+        records: [
+          { id: 22, date: "2024-03-01", totalHireAmount: 38000, amountPaid: 5000 },
+          { id: 23, date: "2024-04-01", totalHireAmount: 38000, amountPaid: 5000 },
+          { id: 24, date: "2024-05-01", totalHireAmount: 38000, amountPaid: 5000 }
+        ],
+        totalHireAmount: 38000,
+        schedule: { nextDueDate: "2024-06-01", installmentAmount: 5000, frequency: "monthly" },
+        party: {
+          customer: { name: "Efua Nyarko", phone: "020 789 0123", address: "Cape Coast, Abura", id: "GHA-789012345" },
+          guarantor: { name: "Paa Kwesi", phone: "024 543 2109", address: "Cape Coast, Pedu", relationship: "Father", id: "GHA-543210987" }
+        }
+      },
+      "a8": {
+        name: "Office Furniture Set",
+        records: [
+          { id: 25, date: "2024-01-10", totalHireAmount: 6500, amountPaid: 1000 },
+          { id: 26, date: "2024-02-10", totalHireAmount: 6500, amountPaid: 1000 },
+          { id: 27, date: "2024-03-10", totalHireAmount: 6500, amountPaid: 1000 },
+          { id: 28, date: "2024-04-10", totalHireAmount: 6500, amountPaid: 1000 },
+          { id: 29, date: "2024-05-10", totalHireAmount: 6500, amountPaid: 1000 }
+        ],
+        totalHireAmount: 6500,
+        schedule: { nextDueDate: "2024-06-10", installmentAmount: 1000, frequency: "monthly" },
+        party: {
+          customer: { name: "Gifty Amoah", phone: "055 890 1234", address: "Accra, Osu", id: "GHA-890123456" },
+          guarantor: { name: "Kofi Anan", phone: "027 654 3210", address: "Accra, Cantonments", relationship: "Colleague", id: "GHA-654321098" }
+        }
+      },
+      "a9": {
+        name: "Generator 10KVA",
+        records: [
+          { id: 30, date: "2024-02-15", totalHireAmount: 15000, amountPaid: 2500 },
+          { id: 31, date: "2024-03-15", totalHireAmount: 15000, amountPaid: 2500 },
+          { id: 32, date: "2024-04-15", totalHireAmount: 15000, amountPaid: 2500 },
+          { id: 33, date: "2024-05-15", totalHireAmount: 15000, amountPaid: 2500 }
+        ],
+        totalHireAmount: 15000,
+        schedule: { nextDueDate: "2024-06-15", installmentAmount: 2500, frequency: "monthly" },
+        party: {
+          customer: { name: "Nii Armah", phone: "024 901 2345", address: "Accra, Teshie", id: "GHA-901234567" },
+          guarantor: { name: "Naa Lartey", phone: "020 765 4321", address: "Accra, Nungua", relationship: "Wife", id: "GHA-765432109" }
+        }
+      },
+      "a10": {
+        name: "Refrigerator Double Door",
+        records: [
+          { id: 34, date: "2024-04-20", totalHireAmount: 5500, amountPaid: 900 },
+          { id: 35, date: "2024-05-20", totalHireAmount: 5500, amountPaid: 900 }
+        ],
+        totalHireAmount: 5500,
+        schedule: { nextDueDate: "2024-06-20", installmentAmount: 900, frequency: "monthly" },
+        party: {
+          customer: { name: "Mavis Adjei", phone: "026 012 3456", address: "Koforidua, Zongo", id: "GHA-012345678" },
+          guarantor: { name: "Eric Ofori", phone: "055 876 5432", address: "Koforidua, Effiduase", relationship: "Brother", id: "GHA-876543210" }
+        }
+      },
+      "a11": {
+        name: "Yamaha Motorbike",
+        records: [
+          { id: 36, date: "2024-05-01", totalHireAmount: 9000, amountPaid: 1500 },
+          { id: 37, date: "2024-05-15", totalHireAmount: 9000, amountPaid: 1500 }
+        ],
+        totalHireAmount: 9000,
+        schedule: { nextDueDate: "2024-06-01", installmentAmount: 1500, frequency: "monthly" },
+        party: {
+          customer: { name: "Ibrahim Musah", phone: "024 123 4567", address: "Tamale, Central Market", id: "GHA-123456780" },
+          guarantor: { name: "Fatima Alhassan", phone: "020 987 6543", address: "Tamale, Lamashegu", relationship: "Sister", id: "GHA-987654320" }
+        }
+      },
+      "a12": {
+        name: "Dell XPS Laptop",
+        records: [
+          { id: 38, date: "2024-03-05", totalHireAmount: 14000, amountPaid: 2300 },
+          { id: 39, date: "2024-04-05", totalHireAmount: 14000, amountPaid: 2300 },
+          { id: 40, date: "2024-05-05", totalHireAmount: 14000, amountPaid: 2300 }
+        ],
+        totalHireAmount: 14000,
+        schedule: { nextDueDate: "2024-06-05", installmentAmount: 2300, frequency: "monthly" },
+        party: {
+          customer: { name: "Doris Aidoo", phone: "055 234 5678", address: "Takoradi, Ako Adjei", id: "GHA-234567890" },
+          guarantor: { name: "Sampson Aidoo", phone: "027 876 5432", address: "Takoradi, Effia", relationship: "Husband", id: "GHA-876543210" }
+        }
+      },
+      "a13": {
+        name: "Sofa Set 7 Seater",
+        records: [
+          { id: 41, date: "2024-02-25", totalHireAmount: 7800, amountPaid: 1200 },
+          { id: 42, date: "2024-03-25", totalHireAmount: 7800, amountPaid: 1200 },
+          { id: 43, date: "2024-04-25", totalHireAmount: 7800, amountPaid: 1200 },
+          { id: 44, date: "2024-05-25", totalHireAmount: 7800, amountPaid: 1200 }
+        ],
+        totalHireAmount: 7800,
+        schedule: { nextDueDate: "2024-06-25", installmentAmount: 1200, frequency: "monthly" },
+        party: {
+          customer: { name: "Joyce Appiah", phone: "024 345 6789", address: "Accra, Achimota", id: "GHA-345678901" },
+          guarantor: { name: "Richard Appiah", phone: "020 765 4321", address: "Accra, Tesano", relationship: "Husband", id: "GHA-765432109" }
+        }
+      },
+      "a14": {
+        name: "Toyota Hilux 2021",
+        records: [
+          { id: 45, date: "2024-01-15", totalHireAmount: 180000, amountPaid: 25000 },
+          { id: 46, date: "2024-02-15", totalHireAmount: 180000, amountPaid: 25000 },
+          { id: 47, date: "2024-03-15", totalHireAmount: 180000, amountPaid: 25000 },
+          { id: 48, date: "2024-04-15", totalHireAmount: 180000, amountPaid: 25000 },
+          { id: 49, date: "2024-05-15", totalHireAmount: 180000, amountPaid: 25000 }
+        ],
+        totalHireAmount: 180000,
+        schedule: { nextDueDate: "2024-06-15", installmentAmount: 25000, frequency: "monthly" },
+        party: {
+          customer: { name: "Michael Osei", phone: "026 456 7890", address: "Kumasi, Asokwa", id: "GHA-456789012" },
+          guarantor: { name: "Grace Osei", phone: "055 654 3210", address: "Kumasi, Ahodwo", relationship: "Wife", id: "GHA-654321098" }
+        }
+      },
+      "a15": {
+        name: "Washing Machine",
+        records: [
+          { id: 50, date: "2024-04-10", totalHireAmount: 4800, amountPaid: 800 },
+          { id: 51, date: "2024-05-10", totalHireAmount: 4800, amountPaid: 800 }
+        ],
+        totalHireAmount: 4800,
+        schedule: { nextDueDate: "2024-06-10", installmentAmount: 800, frequency: "monthly" },
+        party: {
+          customer: { name: "Patience Danso", phone: "024 567 8901", address: "Accra, Kaneshie", id: "GHA-567890123" },
+          guarantor: { name: "Daniel Danso", phone: "020 321 0987", address: "Accra, Dansoman", relationship: "Brother", id: "GHA-321098765" }
+        }
+      },
+      "a16": {
+        name: "Honda CR-V 2019",
+        records: [
+          { id: 52, date: "2024-02-01", totalHireAmount: 55000, amountPaid: 8000 },
+          { id: 53, date: "2024-03-01", totalHireAmount: 55000, amountPaid: 7000 },
+          { id: 54, date: "2024-04-01", totalHireAmount: 55000, amountPaid: 7000 },
+          { id: 55, date: "2024-05-01", totalHireAmount: 55000, amountPaid: 7000 }
+        ],
+        totalHireAmount: 55000,
+        schedule: { nextDueDate: "2024-06-01", installmentAmount: 7000, frequency: "monthly" },
+        party: {
+          customer: { name: "Samuel Addo", phone: "055 678 9012", address: "Tema, Community 7", id: "GHA-678901234" },
+          guarantor: { name: "Rebecca Addo", phone: "027 432 1098", address: "Tema, Community 9", relationship: "Wife", id: "GHA-432109876" }
+        }
+      },
+      "a17": {
+        name: "Industrial Sewing Machine",
+        records: [
+          { id: 56, date: "2024-03-20", totalHireAmount: 7200, amountPaid: 1200 },
+          { id: 57, date: "2024-04-20", totalHireAmount: 7200, amountPaid: 1200 },
+          { id: 58, date: "2024-05-20", totalHireAmount: 7200, amountPaid: 1200 }
+        ],
+        totalHireAmount: 7200,
+        schedule: { nextDueDate: "2024-06-20", installmentAmount: 1200, frequency: "monthly" },
+        party: {
+          customer: { name: "Comfort Owusu", phone: "024 789 0123", address: "Kumasi, Suame Magazine", id: "GHA-789012345" },
+          guarantor: { name: "Emmanuel Owusu", phone: "020 543 2109", address: "Kumasi, Tafo", relationship: "Husband", id: "GHA-543210987" }
+        }
+      },
+      "a18": {
+        name: "Solar Panel System",
+        records: [
+          { id: 59, date: "2024-01-25", totalHireAmount: 25000, amountPaid: 4000 },
+          { id: 60, date: "2024-02-25", totalHireAmount: 25000, amountPaid: 4000 },
+          { id: 61, date: "2024-03-25", totalHireAmount: 25000, amountPaid: 4000 },
+          { id: 62, date: "2024-04-25", totalHireAmount: 25000, amountPaid: 4000 },
+          { id: 63, date: "2024-05-25", totalHireAmount: 25000, amountPaid: 4000 }
+        ],
+        totalHireAmount: 25000,
+        schedule: { nextDueDate: "2024-06-25", installmentAmount: 4000, frequency: "monthly" },
+        party: {
+          customer: { name: "Frank Mensah", phone: "026 890 1234", address: "Accra, Spintex", id: "GHA-890123456" },
+          guarantor: { name: "Linda Mensah", phone: "055 654 3210", address: "Accra, Baatsona", relationship: "Wife", id: "GHA-654321098" }
+        }
+      },
+      "a19": {
+        name: "Bicycle Mountain Bike",
+        records: [
+          { id: 64, date: "2024-05-10", totalHireAmount: 3500, amountPaid: 600 },
+          { id: 65, date: "2024-05-24", totalHireAmount: 3500, amountPaid: 600 }
+        ],
+        totalHireAmount: 3500,
+        schedule: { nextDueDate: "2024-06-10", installmentAmount: 600, frequency: "monthly" },
+        party: {
+          customer: { name: "Peter Amoah", phone: "024 901 2345", address: "Accra, Adenta", id: "GHA-901234567" },
+          guarantor: { name: "Sarah Amoah", phone: "020 765 4321", address: "Accra, Frafraha", relationship: "Sister", id: "GHA-765432109" }
+        }
+      },
+      "a20": {
+        name: "Canon DSLR Camera",
+        records: [
+          { id: 66, date: "2024-04-05", totalHireAmount: 11000, amountPaid: 1800 },
+          { id: 67, date: "2024-05-05", totalHireAmount: 11000, amountPaid: 1800 }
+        ],
+        totalHireAmount: 11000,
+        schedule: { nextDueDate: "2024-06-05", installmentAmount: 1800, frequency: "monthly" },
+        party: {
+          customer: { name: "Grace Adjei", phone: "055 012 3456", address: "Accra, Labone", id: "GHA-012345678" },
+          guarantor: { name: "John Adjei", phone: "027 876 5432", address: "Accra, Osu", relationship: "Husband", id: "GHA-876543210" }
+        }
+      }
+    };
+
+    let agreements = {};
+    let currentAgreementId = "a1";
+    let currentCurrencySymbol = '$';
+    let customersActiveFilter = 'overdue'; // DEFAULT TO OVERDUE FOR DEMO
+    let loaderHidden = false;
+    let businessInfo = { name: '', phone: '', email: '', address: '', logo: '' };
+
+    // ---------- Helpers ----------
+    function formatCurrency(v) {
+      const n = Number(v) || 0;
+      return currentCurrencySymbol + n.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function calcTotals(recs) {
+      if (!recs.length) return { totalPaid: 0, finalBalance: 0, lastHire: 0 };
+      const s = [...recs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let paid = 0, hire = 0;
+      for (const r of s) { hire = r.totalHireAmount; paid += r.amountPaid; }
+      return { totalPaid: paid, finalBalance: hire - paid, lastHire: hire };
+    }
+
+    function calcPortfolioStats() {
+      let totalContract = 0, totalPaid = 0, totalOutstanding = 0, activeCount = 0, completedCount = 0, overdueCount = 0;
+      for (const id in agreements) {
+        const ag = agreements[id];
+        const hire = ag.totalHireAmount || 0;
+        const { totalPaid: tp } = calcTotals(ag.records);
+        const balance = hire - tp;
+        totalContract += hire;
+        totalPaid += tp;
+        if (balance > 0) {
+          totalOutstanding += balance;
+          activeCount++;
+          const s = ag.schedule;
+          if (s && s.nextDueDate) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const due = new Date(s.nextDueDate); due.setHours(0,0,0,0);
+            if (due < today) overdueCount++;
+          }
+        } else if (hire > 0) completedCount++;
+      }
+      return { totalContract, totalPaid, totalOutstanding, activeCount, completedCount, overdueCount, count: Object.keys(agreements).length };
+    }
+
+    function calcTodayCollections() {
+      const today = new Date(); today.setHours(0,0,0,0);
+      let dueToday = [], overdue = [], dueThisWeek = [];
+      for (const id in agreements) {
+        const ag = agreements[id];
+        const s = ag.schedule;
+        if (!s || !s.nextDueDate) continue;
+        const hire = ag.totalHireAmount || 0;
+        const { totalPaid } = calcTotals(ag.records);
+        const balance = hire - totalPaid;
+        if (balance <= 0) continue;
+        const due = new Date(s.nextDueDate); due.setHours(0,0,0,0);
+        const diffDays = Math.round((due - today) / 86400000);
+        const item = { id, name: ag.name, amount: s.installmentAmount || 0, dueDate: s.nextDueDate, diffDays, balance };
+        if (diffDays < 0) overdue.push(item);
+        else if (diffDays === 0) dueToday.push(item);
+        else if (diffDays <= 7) dueThisWeek.push(item);
+      }
+      overdue.sort((a, b) => a.diffDays - b.diffDays);
+      dueToday.sort((a, b) => b.amount - a.amount);
+      dueThisWeek.sort((a, b) => a.diffDays - b.diffDays);
+      return { dueToday, overdue, dueThisWeek };
+    }
+
+    function getPartyData(ag) {
+      if (!ag || !ag.party) return { customer: {}, guarantor: {} };
+      return { customer: ag.party.customer || {}, guarantor: ag.party.guarantor || {} };
+    }
+
+    function buildContactBadges(ag, options) {
+      options = options || {};
+      const includeGuarantor = options.includeGuarantor !== false;
+      const { customer, guarantor } = getPartyData(ag);
+      let html = '';
+      if (customer.phone) {
+        html += '<a class="contact-badge phone" href="tel:' + escapeHtmlPlain(customer.phone) + '" onclick="event.stopPropagation()">📞 ' + escapeHtmlPlain(customer.phone) + '</a>';
+      }
+      if (includeGuarantor && guarantor.phone) {
+        const rel = guarantor.relationship ? ' (' + escapeHtmlPlain(guarantor.relationship) + ')' : '';
+        const label = guarantor.name ? escapeHtmlPlain(guarantor.name) + rel : 'Guarantor';
+        html += '<a class="contact-badge guarantor" href="tel:' + escapeHtmlPlain(guarantor.phone) + '" onclick="event.stopPropagation()">🛡️ ' + label + ': ' + escapeHtmlPlain(guarantor.phone) + '</a>';
+      }
+      return html;
+    }
+
+    function escapeHtmlPlain(s) {
+      return s ? String(s).replace(/[&<>"']/g, function(m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+      }) : '';
+    }
+
+    function escapeHtml(s) {
+      return s ? String(s).replace(/[&<>"']/g, function(m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+      }) : '';
+    }
+
+    // ---------- UI render ----------
+    function renderAgreementsList() {
+      const div = document.getElementById('agreementsList');
+      if (!div) return;
+      let html = '';
+      for (const [id, ag] of Object.entries(agreements)) {
+        const active = (id === currentAgreementId) ? ' active' : '';
+        html += '<div class="agreement-item">' +
+          '<div class="agreement-name-wrap">' +
+            '<span class="agreement-name' + active + '" onclick="switchAgreement(\'' + id + '\')">' + escapeHtmlPlain(ag.name) + '</span>' +
+          '</div>' +
+          '<div class="agreement-actions">' +
+            '<button class="edit-name-btn" onclick="redirectToProduct(\'edit agreement\')">✏️</button>' +
+            '<button onclick="redirectToProduct(\'delete agreement\')">Delete</button>' +
+          '</div>' +
+        '</div>';
+      }
+      div.innerHTML = html || '<div style="text-align:center;padding:22px 16px;color:var(--text-2);"><div style="font-size:2.2rem;margin-bottom:6px;">📋</div><div style="font-weight:600;">No agreements</div></div>';
+      document.getElementById('currentAgreementNameDisplay').textContent = agreements[currentAgreementId] ? agreements[currentAgreementId].name : 'Select Agreement';
+      document.getElementById('headerAgreementName').textContent = agreements[currentAgreementId] ? '— ' + agreements[currentAgreementId].name : '— Select';
+    }
+
+    function loadCurrentAgreementData() {
+      const ag = agreements[currentAgreementId];
+      if (!ag) {
+        document.getElementById('historyBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:28px;">Select an agreement</td></tr>';
+        document.getElementById('summaryStats').innerHTML = '<span>Total Paid: 0</span><span>Remaining: 0</span>';
+        document.getElementById('totalHireAmount').value = '';
+        document.getElementById('amountPaid').value = '';
+        return;
+      }
+      document.getElementById('totalHireAmount').value = ag.totalHireAmount || '';
+      renderHistoryTable(ag.records);
+      updatePreviewForCurrent();
+      renderPaymentPartyInfo();
+    }
+
+    function renderHistoryTable(records) {
+      const searchTerm = (document.getElementById('searchHistoryInput')?.value || '').toLowerCase().trim();
+      const fromDate = document.getElementById('searchDateFrom')?.value || '';
+      const toDate = document.getElementById('searchDateTo')?.value || '';
+      let filtered = records;
+      if (searchTerm) {
+        const numSearch = parseFloat(searchTerm);
+        if (!isNaN(numSearch)) {
+          filtered = filtered.filter(r => Math.abs(r.amountPaid - numSearch) < 0.01 || Math.abs(r.totalHireAmount - numSearch) < 0.01 || String(r.amountPaid).includes(searchTerm) || String(r.totalHireAmount).includes(searchTerm));
+        } else {
+          filtered = filtered.filter(r => r.date.includes(searchTerm) || String(r.amountPaid).includes(searchTerm) || String(r.totalHireAmount).includes(searchTerm));
+        }
+      }
+      if (fromDate) filtered = filtered.filter(r => r.date >= fromDate);
+      if (toDate) filtered = filtered.filter(r => r.date <= toDate);
+      if (!filtered.length) {
+        document.getElementById('historyBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:32px 16px;"><div style="font-size:2.4rem;margin-bottom:6px;opacity:0.5;">📭</div><div style="font-weight:600;">${records.length ? 'No matching records' : 'No payments yet'}</div></td></tr>`;
+        document.getElementById('summaryStats').innerHTML = `<span>Total Paid: ${formatCurrency(0)}</span><span>Remaining: ${formatCurrency(0)}</span>`;
+        return;
+      }
+      const sorted = [...filtered].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let run = 0, html = '', sum = 0, bal = 0, hire = 0;
+      for (const r of sorted) {
+        run += r.amountPaid; sum = run; hire = r.totalHireAmount; bal = hire - run;
+        html += `<tr><td>${r.date}</td><td>${formatCurrency(r.totalHireAmount)}</td><td>${formatCurrency(r.amountPaid)}</td><td>${formatCurrency(run)}</td><td style="color:${bal<0?'var(--danger)':'var(--text)'}">${formatCurrency(bal)}</td><td><div class="action-row-btns" style="display:flex;gap:4px;"><button class="edit-btn" onclick="redirectToProduct('edit payment')" title="Edit">✏️</button><button class="delete-btn" onclick="redirectToProduct('delete payment')" title="Delete">🗑️</button></div></td></tr>`;
+      }
+      document.getElementById('historyBody').innerHTML = html;
+      const isComplete = bal <= 0 && sum > 0;
+      document.getElementById('summaryStats').innerHTML = `<span class="${isComplete ? 'paid-complete' : ''}">Total Paid: ${formatCurrency(sum)} ${isComplete ? '🎉' : ''}</span><span>${isComplete ? '✅ Completed!' : 'Remaining: ' + formatCurrency(bal)}</span>`;
+    }
+
+    function updatePreviewForCurrent() {
+      const ag = agreements[currentAgreementId];
+      if (!ag) return;
+      const rawHire = document.getElementById('totalHireAmount').value.trim();
+      const hire = rawHire === '' ? 0 : (parseFloat(rawHire) || 0);
+      const add = parseFloat(document.getElementById('amountPaid').value) || 0;
+      const { totalPaid } = calcTotals(ag.records);
+      const all = totalPaid + add, bal = hire - all;
+      document.getElementById('totalHireDisplay').innerText = formatCurrency(hire);
+      document.getElementById('totalPaidDisplay').innerText = formatCurrency(all);
+      const balEl = document.getElementById('balancePreview');
+      balEl.innerText = formatCurrency(bal);
+      if (bal <= 0 && all > 0) {
+        balEl.style.background = 'var(--accent-gradient)';
+        balEl.classList.add('zero-balance');
+      } else {
+        balEl.style.background = 'var(--primary-gradient)';
+        balEl.classList.remove('zero-balance');
+      }
+    }
+
+    function renderPaymentPartyInfo() {
+      const container = document.getElementById('paymentPartyInfo');
+      if (!container) return;
+      const ag = agreements[currentAgreementId];
+      if (!ag) { container.style.display = 'none'; return; }
+      const { customer, guarantor } = getPartyData(ag);
+      const hasAny = customer.name || customer.phone || guarantor.name || guarantor.phone;
+      if (!hasAny) { container.style.display = 'none'; return; }
+      let html = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:0.78rem;line-height:1.6;">';
+      if (customer.name || customer.phone) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px;">';
+        html += '<span style="font-weight:800;color:var(--primary);">👤 ' + escapeHtmlPlain(customer.name || 'Customer') + '</span>';
+        if (customer.phone) html += '<a class="contact-badge phone" href="tel:' + escapeHtmlPlain(customer.phone) + '" style="margin-left:auto;">📞 ' + escapeHtmlPlain(customer.phone) + '</a>';
+        html += '</div>';
+      }
+      if (guarantor.name || guarantor.phone) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:6px;border-top:1px dashed var(--divider);">';
+        const rel = guarantor.relationship ? ' (' + escapeHtmlPlain(guarantor.relationship) + ')' : '';
+        html += '<span style="font-weight:800;color:var(--accent);">🛡️ ' + escapeHtmlPlain(guarantor.name || 'Guarantor') + rel + '</span>';
+        if (guarantor.phone) html += '<a class="contact-badge guarantor" href="tel:' + escapeHtmlPlain(guarantor.phone) + '" style="margin-left:auto;">📞 ' + escapeHtmlPlain(guarantor.phone) + '</a>';
+        html += '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+      container.style.display = 'block';
+    }
+
+    function renderCustomers() {
+      const div = document.getElementById('customersList');
+      if (!div) return;
+      const stats = calcPortfolioStats();
+      document.getElementById('csTotalCustomers').textContent = stats.count;
+      document.getElementById('csTotalContract').textContent = formatCurrency(stats.totalContract);
+      document.getElementById('csTotalPaid').textContent = formatCurrency(stats.totalPaid);
+      document.getElementById('csTotalOutstanding').textContent = formatCurrency(stats.totalOutstanding);
+
+      const searchTerm = (document.getElementById('customersSearchInput')?.value || '').toLowerCase().trim();
+      const sortMode = document.getElementById('customersSortSelect')?.value || 'balance-desc';
+
+      let rows = [];
+      for (const [id, ag] of Object.entries(agreements)) {
+        const hire = ag.totalHireAmount || 0;
+        const { totalPaid } = calcTotals(ag.records);
+        const balance = hire - totalPaid;
+        const { customer, guarantor } = getPartyData(ag);
+        let status = 'active';
+        if (balance <= 0 && hire > 0) status = 'completed';
+        const s = ag.schedule;
+        let isOverdue = false;
+        if (s && s.nextDueDate && balance > 0) {
+          const today = new Date(); today.setHours(0,0,0,0);
+          const due = new Date(s.nextDueDate); due.setHours(0,0,0,0);
+          if (due < today) { isOverdue = true; status = 'overdue'; }
+        }
+        rows.push({ id, name: ag.name, customerName: customer.name || '', customerPhone: customer.phone || '', guarantorName: guarantor.name || '', guarantorPhone: guarantor.phone || '', guarantorRelationship: guarantor.relationship || '', hire, paid: totalPaid, balance, status, isOverdue, nextDueDate: s ? s.nextDueDate : '' });
+      }
+      if (customersActiveFilter !== 'all') rows = rows.filter(r => r.status === customersActiveFilter);
+      if (searchTerm) {
+        rows = rows.filter(r => r.name.toLowerCase().includes(searchTerm) || r.customerName.toLowerCase().includes(searchTerm) || r.customerPhone.toLowerCase().includes(searchTerm) || r.guarantorName.toLowerCase().includes(searchTerm) || r.guarantorPhone.toLowerCase().includes(searchTerm));
+      }
+      rows.sort((a, b) => {
+        switch (sortMode) {
+          case 'balance-desc': return b.balance - a.balance;
+          case 'balance-asc': return a.balance - b.balance;
+          case 'name-asc': return a.name.localeCompare(b.name);
+          case 'name-desc': return b.name.localeCompare(a.name);
+          case 'contract-desc': return b.hire - a.hire;
+          case 'paid-desc': return b.paid - a.paid;
+          default: return 0;
+        }
+      });
+      if (!rows.length) {
+        div.innerHTML = '<div class="customers-empty"><div class="ce-icon">🔍</div><div class="ce-title">No matching customers</div><div class="ce-desc">Try a different search or filter.</div></div>';
+        return;
+      }
+      let html = '';
+      for (const r of rows) {
+        let rowClass = 'customer-row';
+        if (r.status === 'completed') rowClass += ' is-complete';
+        if (r.isOverdue) rowClass += ' is-overdue';
+        let balanceClass = 'cb-value';
+        if (r.isOverdue) balanceClass += ' is-overdue';
+        else if (r.balance <= 0) balanceClass += ' is-complete';
+        else balanceClass += ' is-outstanding';
+        const contactBadges = buildContactBadges(agreements[r.id]);
+        html += '<div class="' + rowClass + '" onclick="switchAgreement(\'' + r.id + '\')">' +
+          '<div class="customer-info">' +
+            '<div class="customer-name">' + escapeHtmlPlain(r.name) + '</div>' +
+            '<div class="customer-meta">' +
+              '<span class="meta-item">📋 Contract <strong>' + formatCurrency(r.hire) + '</strong></span>' +
+              '<span class="meta-item">💵 Paid <strong>' + formatCurrency(r.paid) + '</strong></span>' +
+              (r.nextDueDate ? '<span class="meta-item">📅 Due <strong>' + r.nextDueDate + '</strong></span>' : '') +
+            '</div>' +
+            (contactBadges ? '<div class="customer-meta" style="margin-top:6px;gap:6px;">' + contactBadges + '</div>' : '') +
+          '</div>' +
+          '<div class="customer-balance"><div class="cb-label">Balance</div><div class="' + balanceClass + '">' + formatCurrency(r.balance) + '</div></div>' +
+        '</div>';
+      }
+      div.innerHTML = html;
+    }
+
+    function updateDashboardStats() {
+      document.getElementById('dashTotalAgreements').textContent = Object.keys(agreements).length;
+      let totalPaid = 0, active = 0;
+      for (const id in agreements) {
+        const { totalPaid: tp } = calcTotals(agreements[id].records);
+        totalPaid += tp;
+        if (tp > 0) active++;
+      }
+      document.getElementById('dashTotalPaid').textContent = formatCurrency(totalPaid);
+      document.getElementById('dashActiveAgreements').textContent = active;
+      document.getElementById('dashCurrentAgreement').textContent = agreements[currentAgreementId] ? 'Current: ' + agreements[currentAgreementId].name : 'No agreement selected';
+      updateTodayCollections();
+    }
+
+    function updateTodayCollections() {
+      const card = document.getElementById('todayCollectionsCard');
+      if (!card) return;
+      const { dueToday, overdue, dueThisWeek } = calcTodayCollections();
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+      document.getElementById('tcDate').textContent = dateStr;
+      const totalCount = dueToday.length + overdue.length;
+      document.getElementById('tcCount').textContent = totalCount;
+      const tcSub = document.getElementById('tcSub');
+      const tcAction = document.getElementById('tcAction');
+      if (totalCount === 0 && dueThisWeek.length === 0) {
+        card.classList.remove('has-overdue'); card.classList.add('all-clear');
+        document.getElementById('tcLabel').innerHTML = 'all clear<br>today';
+        tcSub.innerHTML = '<span class="tc-chip">✅ No payments due</span>' + (Object.keys(agreements).length > 0 ? '<span>Keep it up!</span>' : '');
+        tcAction.style.display = 'none';
+      } else if (totalCount === 0) {
+        card.classList.remove('has-overdue'); card.classList.add('all-clear');
+        document.getElementById('tcLabel').innerHTML = 'due<br>today';
+        tcSub.innerHTML = '<span class="tc-chip">' + dueThisWeek.length + ' due this week</span>';
+        tcAction.style.display = 'none';
+      } else {
+        if (overdue.length > 0) { card.classList.add('has-overdue'); card.classList.remove('all-clear'); }
+        else { card.classList.remove('has-overdue'); card.classList.add('all-clear'); }
+        document.getElementById('tcLabel').innerHTML = totalCount === 1 ? 'payment<br>to collect' : 'payments<br>to collect';
+        let subHtml = '';
+        if (overdue.length > 0) subHtml += '<span class="tc-chip overdue-chip">⚠️ ' + overdue.length + ' overdue</span>';
+        if (dueToday.length > 0) subHtml += '<span class="tc-chip">📅 ' + dueToday.length + ' due today</span>';
+        if (dueThisWeek.length > 0) subHtml += '<span class="tc-chip">🔜 ' + dueThisWeek.length + ' this week</span>';
+        tcSub.innerHTML = subHtml;
+        tcAction.style.display = 'inline-flex';
+        tcAction.textContent = 'View customers →';
+      }
+    }
+
+    function updateReminderDisplay() {
+      const el = document.getElementById('reminderDisplay');
+      if (!el) return;
+      const ag = agreements[currentAgreementId];
+      if (!ag) { el.innerHTML = '<p>Select an agreement to see reminders.</p>'; return; }
+      const s = ag.schedule;
+      if (!s.nextDueDate || !s.installmentAmount) { el.innerHTML = '<p>No schedule set.</p>'; return; }
+      const today = new Date(); today.setHours(0,0,0,0);
+      const due = new Date(s.nextDueDate); due.setHours(0,0,0,0);
+      const diff = Math.ceil((due - today) / 86400000);
+      const bal = calcTotals(ag.records).finalBalance;
+      let h = `<div style="margin-bottom:4px;"><strong>Next Payment:</strong> ${formatCurrency(s.installmentAmount)} on ${s.nextDueDate}</div>`;
+      if (diff < 0) h += `<div class="reminder-warning">⚠️ Overdue by ${Math.abs(diff)} days!</div>`;
+      else if (diff === 0) h += `<div class="reminder-warning">⚠️ Due today!</div>`;
+      else if (diff <= 3) h += `<div class="reminder-warning">⏰ Due in ${diff} days!</div>`;
+      else h += `<div>📅 Due in ${diff} days</div>`;
+      h += `<div>💰 Remaining: ${formatCurrency(bal)}</div>`;
+      const { customer, guarantor } = getPartyData(ag);
+      if (customer.phone || guarantor.phone) {
+        h += '<div class="reminder-contact-row"><span class="rc-label">📞 Call when overdue</span>';
+        if (customer.phone) h += '<a class="contact-badge phone" href="tel:' + escapeHtmlPlain(customer.phone) + '">👤 ' + (customer.name || 'Customer') + ': ' + escapeHtmlPlain(customer.phone) + '</a>';
+        if (guarantor.phone) h += '<a class="contact-badge guarantor" href="tel:' + escapeHtmlPlain(guarantor.phone) + '">🛡️ ' + (guarantor.name || 'Guarantor') + ': ' + escapeHtmlPlain(guarantor.phone) + '</a>';
+        h += '</div>';
+      }
+      el.innerHTML = h;
+    }
+
+    function loadScheduleIntoForm() {
+      const ag = agreements[currentAgreementId];
+      if (!ag) return;
+      const s = ag.schedule;
+      document.getElementById('nextDueDate').value = s.nextDueDate || '';
+      document.getElementById('installmentAmount').value = s.installmentAmount || '';
+      document.getElementById('frequencySelect').value = s.frequency || 'monthly';
+      updateReminderDisplay();
+    }
+
+    function switchAgreement(id) {
+      if (!agreements[id]) return;
+      currentAgreementId = id;
+      document.getElementById('amountPaid').value = '';
+      renderAgreementsList();
+      loadCurrentAgreementData();
+      updatePreviewForCurrent();
+      loadScheduleIntoForm();
+      updateReminderDisplay();
+      updateDashboardStats();
+      updateStickyHeader();
+      renderPaymentPartyInfo();
+      closeSidebarIfMobile();
+      setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 50);
+    }
+
+    function updateStickyHeader() {
+      if (agreements[currentAgreementId]) {
+        document.getElementById('headerAgreementName').textContent = '— ' + agreements[currentAgreementId].name;
+      } else {
+        document.getElementById('headerAgreementName').textContent = '— Select';
+      }
+    }
+
+    function refreshAllCurrencyDisplays() {
+      updatePreviewForCurrent();
+      const ag = agreements[currentAgreementId];
+      if (ag) { renderHistoryTable(ag.records); updateReminderDisplay(); }
+      updateDashboardStats();
+      renderCustomers();
+    }
+
+    // ---------- Redirect to product ----------
+    function redirectToProduct(action) {
+      showToast('🔒 Demo limit reached! Opening Selar so you can buy the full version...');
+      setTimeout(function() {
+        window.open(PRODUCT_URL, '_blank', 'noopener');
+      }, 800);
+    }
+
+    // ---------- Business Settings ----------
+    function saveBusinessInfoRedirect() {
+      const name = document.getElementById('businessNameInput').value.trim();
+      const phone = document.getElementById('businessPhoneInput').value.trim();
+      const email = document.getElementById('businessEmailInput').value.trim();
+      const address = document.getElementById('businessAddressInput').value.trim();
+
+      businessInfo.name = name;
+      businessInfo.phone = phone;
+      businessInfo.email = email;
+      businessInfo.address = address;
+
+      if (name) {
+        document.getElementById('headerBusinessName').textContent = name;
+        document.body.classList.add('has-business');
+      } else {
+        document.body.classList.remove('has-business');
+      }
+      document.getElementById('aboutTitle').textContent = name || 'PayPlan Ledger — Demo';
+
+      showToast('💾 Business info saved for preview. Opening full version...');
+      setTimeout(function() {
+        window.open(PRODUCT_URL, '_blank', 'noopener');
+      }, 900);
+    }
+
+    function saveCurrencyRedirect() {
+      const sel = document.getElementById('currencySelect');
+      currentCurrencySymbol = sel.value;
+      refreshAllCurrencyDisplays();
+      showToast('💱 Currency applied. Opening full version...');
+      setTimeout(function() {
+        window.open(PRODUCT_URL, '_blank', 'noopener');
+      }, 900);
+    }
+
+    function resetDemoData() {
+      agreements = JSON.parse(JSON.stringify(demoAgreements));
+      currentAgreementId = "a1";
+      customersActiveFilter = "overdue";
+      document.querySelectorAll('.customers-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'overdue'));
+      document.getElementById('customersSearchInput').value = '';
+      document.getElementById('businessNameInput').value = '';
+      document.getElementById('businessPhoneInput').value = '';
+      document.getElementById('businessEmailInput').value = '';
+      document.getElementById('businessAddressInput').value = '';
+      businessInfo = { name: '', phone: '', email: '', address: '', logo: '' };
+      document.body.classList.remove('has-business');
+      document.getElementById('headerBusinessName').textContent = 'Demo Business';
+      document.getElementById('aboutTitle').textContent = 'PayPlan Ledger — Demo';
+      showToast('♻️ Demo reset successful.');
+      switchSection('dashboard');
+      renderAgreementsList();
+      loadCurrentAgreementData();
+      updateDashboardStats();
+      renderCustomers();
+      updateTodayCollections();
+    }
+
+    // ---------- PDF Generation ----------
+    let pdfOverlayEl = null;
+    let pdfProgressInterval = null;
+    let pdfMessageInterval = null;
+    let pdfMessageIndex = 0;
+    let pdfProgressValue = 0;
+
+    const PDF_MESSAGES = [
+      'Preparing your report...',
+      'Laying out the ledger...',
+      'Rendering payment table...',
+      'Calculating balances...',
+      'Finishing touches...'
+    ];
+
+    function showPDFProgress(title) {
+      hidePDFProgress(true);
+      pdfOverlayEl = document.createElement('div');
+      pdfOverlayEl.className = 'pdf-overlay';
+      pdfOverlayEl.id = 'pdfProgressOverlay';
+      pdfOverlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(5,8,18,0.55);backdrop-filter:blur(8px);z-index:17000;display:flex;align-items:center;justify-content:center;padding:24px;';
+      pdfOverlayEl.innerHTML =
+        '<div style="background:linear-gradient(180deg,rgba(19,26,44,0.98),rgba(13,18,32,0.98));border:1px solid rgba(255,255,255,0.08);border-radius:28px;padding:40px 32px 32px;max-width:380px;width:100%;text-align:center;box-shadow:0 32px 96px rgba(0,0,0,0.7);color:#f1f5f9;position:relative;overflow:hidden;">' +
+          '<div style="position:relative;width:100px;height:100px;margin:0 auto 22px;display:flex;align-items:center;justify-content:center;">' +
+            '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(16,185,129,0.4);animation:pdfRing 2.6s ease-out infinite;"></div>' +
+            '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(16,185,129,0.4);animation:pdfRing 2.6s ease-out infinite;animation-delay:0.86s;"></div>' +
+            '<div style="position:relative;width:72px;height:72px;background:linear-gradient(135deg,#10b981,#059669);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2rem;color:white;box-shadow:0 16px 40px rgba(16,185,129,0.5);z-index:2;">📄</div>' +
+          '</div>' +
+          '<div style="font-size:1.25rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:6px;background:linear-gradient(135deg,#ffffff,#94a3b8);background-clip:text;-webkit-background-clip:text;color:transparent;">' + (title || 'Generating Report') + '</div>' +
+          '<div id="pdfProgressMessage" style="font-size:0.85rem;color:#94a3b8;margin-bottom:24px;min-height:20px;line-height:1.5;">' + PDF_MESSAGES[0] + '</div>' +
+          '<div style="width:100%;height:6px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;margin-bottom:14px;">' +
+            '<div id="pdfProgressBar" style="height:100%;width:0%;background:linear-gradient(135deg,#10b981,#059669);border-radius:999px;box-shadow:0 0 12px rgba(16,185,129,0.6);transition:width 1s cubic-bezier(0.4,0,0.2,1);"></div>' +
+          '</div>' +
+          '<div id="pdfProgressText" style="font-size:0.7rem;font-weight:700;color:#64748b;letter-spacing:0.12em;text-transform:uppercase;">0% COMPLETE</div>' +
+          '<div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.05);font-size:0.65rem;color:#475569;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;">PAYPLAN LEDGER • DEMO</div>' +
+        '</div>';
+
+      document.body.appendChild(pdfOverlayEl);
+
+      if (!document.getElementById('pdfKeyframes')) {
+        const style = document.createElement('style');
+        style.id = 'pdfKeyframes';
+        style.textContent = '@keyframes pdfRing{0%{transform:scale(0.6);opacity:1}100%{transform:scale(1.3);opacity:0}}';
+        document.head.appendChild(style);
+      }
+
+      pdfProgressValue = 0;
+      pdfMessageIndex = 0;
+
+      pdfProgressInterval = setInterval(function() {
+        if (pdfProgressValue < 90) {
+          pdfProgressValue += Math.max(0.8, (90 - pdfProgressValue) * 0.025);
+          if (pdfProgressValue > 90) pdfProgressValue = 90;
+          updatePDFProgressUI(pdfProgressValue);
+        }
+      }, 220);
+
+      pdfMessageInterval = setInterval(function() {
+        pdfMessageIndex = (pdfMessageIndex + 1) % PDF_MESSAGES.length;
+        const msgEl = document.getElementById('pdfProgressMessage');
+        if (msgEl) {
+          msgEl.style.opacity = '0';
+          setTimeout(function() {
+            if (msgEl) {
+              msgEl.textContent = PDF_MESSAGES[pdfMessageIndex];
+              msgEl.style.opacity = '1';
+            }
+          }, 400);
+        }
+      }, 2200);
+    }
+
+    function updatePDFProgressUI(value) {
+      const bar = document.getElementById('pdfProgressBar');
+      const text = document.getElementById('pdfProgressText');
+      if (bar) bar.style.width = value + '%';
+      if (text) text.textContent = Math.round(value) + '% COMPLETE';
+    }
+
+    function hidePDFProgress(immediate) {
+      if (pdfProgressInterval) { clearInterval(pdfProgressInterval); pdfProgressInterval = null; }
+      if (pdfMessageInterval) { clearInterval(pdfMessageInterval); pdfMessageInterval = null; }
+
+      if (!pdfOverlayEl) return Promise.resolve();
+
+      if (!immediate) {
+        updatePDFProgressUI(100);
+        const msgEl = document.getElementById('pdfProgressMessage');
+        if (msgEl) msgEl.textContent = 'Ready! Downloading...';
+      }
+
+      const el = pdfOverlayEl;
+      pdfOverlayEl = null;
+
+      return new Promise(function(resolve) {
+        const fadeDelay = immediate ? 0 : 700;
+        setTimeout(function() {
+          el.style.opacity = '0';
+          setTimeout(function() {
+            if (el.parentNode) el.parentNode.removeChild(el);
+            resolve();
+          }, 400);
+        }, fadeDelay);
+      });
+    }
+
+    function triggerBlobDownload(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      try { a.click(); } catch (e) {
+        const evt = new MouseEvent('click', { view: window, bubbles: true, cancelable: true });
+        a.dispatchEvent(evt);
+      }
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 4000);
+    }
+
+    async function generatePDF(htmlContent, fileName) {
+      if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+        showToast('⚠️ PDF libraries not loaded. Please check your internet connection.');
+        return;
+      }
+
+      showPDFProgress('Generating Report');
+
+      try {
+        var container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-99999px';
+        container.style.top = '0';
+        container.style.width = '794px';
+        container.style.background = '#ffffff';
+        container.style.padding = '0';
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
+
+        await new Promise(function(r) { setTimeout(r, 250); });
+
+        var canvas = await html2canvas(container, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false,
+          useCORS: true,
+          windowWidth: 794
+        });
+
+        document.body.removeChild(container);
+
+        var { jsPDF } = window.jspdf;
+        var pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+        var pageWidth = pdf.internal.pageSize.getWidth();
+        var pageHeight = pdf.internal.pageSize.getHeight();
+        var imgWidth = pageWidth;
+        var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (imgHeight <= pageHeight) {
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgWidth, imgHeight);
+        } else {
+          var pageCanvasHeight = Math.floor((pageHeight * canvas.width) / pageWidth);
+          var yOffset = 0;
+          while (yOffset < canvas.height) {
+            var sliceHeight = Math.min(pageCanvasHeight, canvas.height - yOffset);
+            var pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = sliceHeight;
+            var pctx = pageCanvas.getContext('2d');
+            pctx.fillStyle = '#ffffff';
+            pctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+            pctx.drawImage(canvas, 0, yOffset, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+            var sliceData = pageCanvas.toDataURL('image/jpeg', 0.92);
+            var sliceHeightPt = (sliceHeight * imgWidth) / canvas.width;
+            if (yOffset > 0) pdf.addPage();
+            pdf.addImage(sliceData, 'JPEG', 0, 0, imgWidth, sliceHeightPt);
+            yOffset += sliceHeight;
+          }
+        }
+
+        var pdfBlob = pdf.output('blob');
+        if (!pdfBlob || pdfBlob.size === 0) throw new Error('PDF produced an empty file.');
+
+        const safeName = fileName || ('PayPlan_Ledger_Report_' + new Date().toISOString().slice(0, 10) + '.pdf');
+
+        await new Promise(function(r) { setTimeout(r, 150); });
+        await hidePDFProgress(false);
+        await new Promise(function(r) { setTimeout(r, 100); });
+
+        triggerBlobDownload(pdfBlob, safeName);
+        showToast('✅ PDF downloaded');
+
+      } catch (err) {
+        hidePDFProgress(true);
+        console.error('PDF error:', err);
+        showToast('❌ PDF failed: ' + err.message);
+      }
+    }
+
+    function buildPartyBlock(ag) {
+      const { customer, guarantor } = getPartyData(ag);
+      const hasCustomer = customer.name || customer.phone || customer.address || customer.id;
+      const hasGuarantor = guarantor.name || guarantor.phone || guarantor.address || guarantor.relationship || guarantor.id;
+      if (!hasCustomer && !hasGuarantor) return '';
+
+      let html = '<div class="meta-grid" style="grid-template-columns:1fr 1fr;">';
+      html += '<div class="meta-block">' +
+                '<div class="ml">👤 Customer</div>' +
+                '<div class="mv name">' + escapeHtml(customer.name || '—') + '</div>' +
+                (customer.phone ? '<div class="mv" style="font-size:11px;color:#475569;margin-top:2px;">📞 ' + escapeHtml(customer.phone) + '</div>' : '') +
+                (customer.address ? '<div class="mv" style="font-size:10px;color:#64748b;margin-top:2px;">📍 ' + escapeHtml(customer.address) + '</div>' : '') +
+                (customer.id ? '<div class="mv" style="font-size:10px;color:#64748b;margin-top:2px;">🆔 ' + escapeHtml(customer.id) + '</div>' : '') +
+              '</div>';
+      html += '<div class="meta-block" style="background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.3);">' +
+                '<div class="ml" style="color:#c2410c;">🛡️ Guarantor</div>' +
+                '<div class="mv name">' + escapeHtml(guarantor.name || '—') + (guarantor.relationship ? ' <span style="font-size:10px;color:#c2410c;font-weight:600;">(' + escapeHtml(guarantor.relationship) + ')</span>' : '') + '</div>' +
+                (guarantor.phone ? '<div class="mv" style="font-size:11px;color:#475569;margin-top:2px;">📞 ' + escapeHtml(guarantor.phone) + '</div>' : '') +
+                (guarantor.address ? '<div class="mv" style="font-size:10px;color:#64748b;margin-top:2px;">📍 ' + escapeHtml(guarantor.address) + '</div>' : '') +
+                (guarantor.id ? '<div class="mv" style="font-size:10px;color:#64748b;margin-top:2px;">🆔 ' + escapeHtml(guarantor.id) + '</div>' : '') +
+              '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    function buildPDF(records, mainTitle, period, agree, seller, buyer, ag) {
+      const sorted = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let run = 0;
+      let rows = '';
+      let paid = 0, bal = 0, hire = 0;
+
+      for (const r of sorted) {
+        run += r.amountPaid;
+        paid = run;
+        hire = r.totalHireAmount;
+        bal = hire - run;
+        rows +=
+          '<tr>' +
+            '<td class="c-date">' + r.date + '</td>' +
+            '<td class="c-num">' + formatCurrency(r.totalHireAmount) + '</td>' +
+            '<td class="c-num">' + formatCurrency(r.amountPaid) + '</td>' +
+            '<td class="c-num c-total">' + formatCurrency(run) + '</td>' +
+            '<td class="c-num ' + (bal < 0 ? 'c-negative' : 'c-balance') + '">' + formatCurrency(bal) + '</td>' +
+          '</tr>';
+      }
+
+      const now = new Date();
+      const generated = now.toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      const docId = 'DEMO-' + now.getTime().toString(36).toUpperCase().slice(-8);
+
+      const partyBlock = ag ? buildPartyBlock(ag) : '';
+
+      const brandName = businessInfo.name ? businessInfo.name : 'PayPlan Ledger';
+      const brandSub = 'Payment Statement';
+      const logoImg = businessInfo.logo
+        ? '<img src="' + businessInfo.logo + '" alt="Logo" style="width:44px;height:44px;border-radius:12px;object-fit:cover;box-shadow:0 6px 16px rgba(16,185,129,0.35);flex-shrink:0;">'
+        : '<div class="brand-icon">💼</div>';
+
+      return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(brandName) + ' — ' + escapeHtml(mainTitle) + '</title><style>' +
+        '*{box-sizing:border-box;margin:0;padding:0}' +
+        'body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fff;color:#0f172a;padding:0;width:794px}' +
+        '.page{padding:56px 56px 48px;background:#fff;min-height:1123px;position:relative}' +
+        '.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:2px solid #10b981;margin-bottom:24px;gap:16px}' +
+        '.brand{display:flex;align-items:center;gap:12px;flex:1;min-width:0}' +
+        '.brand-icon{width:44px;height:44px;background:linear-gradient(135deg,#10b981 0%,#059669 100%);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;box-shadow:0 6px 16px rgba(16,185,129,0.35);flex-shrink:0}' +
+        '.brand-text{line-height:1.3;min-width:0}' +
+        '.brand-name{font-size:15px;font-weight:900;color:#0f172a;letter-spacing:-0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+        '.brand-sub{font-size:10px;font-weight:700;color:#10b981;letter-spacing:0.14em;text-transform:uppercase;margin-top:2px}' +
+        '.brand-contact{font-size:9px;color:#64748b;font-weight:600;margin-top:2px;line-height:1.4}' +
+        '.doc-meta{text-align:right;font-size:10px;color:#64748b;line-height:1.6;flex-shrink:0}' +
+        '.doc-meta .id{font-family:"Courier New",monospace;color:#0f172a;font-weight:800;letter-spacing:0.02em}' +
+        '.doc-title{font-size:26px;font-weight:900;color:#0f172a;letter-spacing:-0.03em;margin-bottom:4px}' +
+        '.doc-sub{font-size:12px;color:#64748b;font-weight:600;margin-bottom:20px}' +
+        '.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}' +
+        '.meta-block{padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}' +
+        '.meta-block .ml{font-size:9px;color:#64748b;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px}' +
+        '.meta-block .mv{font-size:13px;color:#0f172a;font-weight:700;line-height:1.4}' +
+        '.meta-block .mv.name{font-size:14px;font-weight:800;letter-spacing:-0.01em}' +
+        '.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}' +
+        '.sum-card{padding:16px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;text-align:center}' +
+        '.sum-card.contract{background:#f1f5f9}' +
+        '.sum-card.paid{background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.3)}' +
+        '.sum-card.remaining{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.3)}' +
+        '.sum-label{font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#64748b;margin-bottom:6px}' +
+        '.sum-card.paid .sum-label{color:#059669}' +
+        '.sum-card.remaining .sum-label{color:#c2410c}' +
+        '.sum-value{font-size:18px;font-weight:900;letter-spacing:-0.03em;color:#0f172a}' +
+        '.sum-card.paid .sum-value{color:#059669}' +
+        '.sum-card.remaining .sum-value{color:#c2410c}' +
+        '.section-label{font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px}' +
+        '.section-label .dot{width:6px;height:6px;background:#10b981;border-radius:50%;display:inline-block}' +
+        'table.ledger{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}' +
+        'table.ledger thead th{background:#0f172a;color:#fff;padding:11px 14px;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;text-align:right}' +
+        'table.ledger thead th:first-child{text-align:left;border-top-left-radius:8px}' +
+        'table.ledger thead th:last-child{border-top-right-radius:8px}' +
+        'table.ledger tbody td{padding:11px 14px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle}' +
+        'table.ledger tbody td.c-date{text-align:left;color:#0f172a;font-weight:600}' +
+        'table.ledger tbody td.c-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}' +
+        'table.ledger tbody td.c-total{color:#0f172a;font-weight:800}' +
+        'table.ledger tbody td.c-balance{color:#c2410c;font-weight:800}' +
+        'table.ledger tbody td.c-negative{color:#dc2626;font-weight:800}' +
+        'table.ledger tbody tr:nth-child(even) td{background:#f8fafc}' +
+        'table.ledger tbody tr:last-child td{border-bottom:2px solid #10b981}' +
+        '.footer{margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#94a3b8;letter-spacing:0.08em;text-transform:uppercase;font-weight:600}' +
+        '.footer .brand-mark{color:#10b981;font-weight:800}' +
+        '.empty-state{padding:40px 20px;text-align:center;background:#f8fafc;border-radius:12px;color:#94a3b8;font-size:12px}' +
+        '</style></head><body>' +
+        '<div class="page">' +
+          '<div class="header">' +
+            '<div class="brand">' +
+              logoImg +
+              '<div class="brand-text">' +
+                '<div class="brand-name">' + escapeHtml(brandName) + '</div>' +
+                '<div class="brand-sub">' + escapeHtml(brandSub) + '</div>' +
+                (businessInfo.phone || businessInfo.email || businessInfo.address ?
+                  '<div class="brand-contact">' +
+                    [businessInfo.phone ? '📞 ' + escapeHtml(businessInfo.phone) : '',
+                     businessInfo.email ? '📧 ' + escapeHtml(businessInfo.email) : '',
+                     businessInfo.address ? '📍 ' + escapeHtml(businessInfo.address) : '']
+                     .filter(Boolean).join(' &nbsp;·&nbsp; ') +
+                  '</div>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="doc-meta">' +
+              '<div>Doc ID: <span class="id">' + docId + '</span></div>' +
+              '<div>' + generated + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="doc-title">' + escapeHtml(mainTitle) + '</div>' +
+          '<div class="doc-sub">' + escapeHtml(period) + '</div>' +
+          '<div class="meta-grid">' +
+            '<div class="meta-block">' +
+              '<div class="ml">Agreement / Account</div>' +
+              '<div class="mv name">' + escapeHtml(agree) + '</div>' +
+            '</div>' +
+            '<div class="meta-block">' +
+              '<div class="ml">Seller / Buyer</div>' +
+              '<div class="mv">' + escapeHtml(seller) + ' &nbsp;→&nbsp; ' + escapeHtml(buyer) + '</div>' +
+            '</div>' +
+          '</div>' +
+          partyBlock +
+          '<div class="summary-row">' +
+            '<div class="sum-card contract">' +
+              '<div class="sum-label">Contract Amount</div>' +
+              '<div class="sum-value">' + formatCurrency(hire) + '</div>' +
+            '</div>' +
+            '<div class="sum-card paid">' +
+              '<div class="sum-label">Total Paid</div>' +
+              '<div class="sum-value">' + formatCurrency(paid) + '</div>' +
+            '</div>' +
+            '<div class="sum-card remaining">' +
+              '<div class="sum-label">Balance Remaining</div>' +
+              '<div class="sum-value">' + formatCurrency(bal) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="section-label"><span class="dot"></span> Payment Ledger</div>' +
+          (rows ?
+            '<table class="ledger">' +
+              '<thead><tr>' +
+                '<th>Date</th>' +
+                '<th>Contract</th>' +
+                '<th>Paid</th>' +
+                '<th>Running Total</th>' +
+                '<th>Balance</th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>'
+            :
+            '<div class="empty-state">No payment records in this report.</div>'
+          ) +
+          '<div class="footer">' +
+            '<span><span class="brand-mark">' + escapeHtml(businessInfo.name || 'PayPlan Ledger') + '</span> · Powered by PayPlan Ledger</span>' +
+            '<span>' + records.length + ' record' + (records.length === 1 ? '' : 's') + ' · Demo Page 1</span>' +
+          '</div>' +
+        '</div></body></html>';
+    }
+
+    function buildPortfolioPDF() {
+      const stats = calcPortfolioStats();
+      const now = new Date();
+      const generated = now.toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      const docId = 'DEMO-' + now.getTime().toString(36).toUpperCase().slice(-8);
+
+      const rows = [];
+      for (const id in agreements) {
+        const ag = agreements[id];
+        const hire = ag.totalHireAmount || 0;
+        const { totalPaid } = calcTotals(ag.records);
+        const balance = hire - totalPaid;
+        const { customer, guarantor } = getPartyData(ag);
+        let status = 'Active';
+        let statusClass = 'st-active';
+        if (balance <= 0 && hire > 0) {
+          status = 'Completed';
+          statusClass = 'st-complete';
+        } else {
+          const s = ag.schedule;
+          if (s && s.nextDueDate) {
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const due = new Date(s.nextDueDate); due.setHours(0, 0, 0, 0);
+            if (due < today) {
+              status = 'Overdue';
+              statusClass = 'st-overdue';
+            }
+          }
+        }
+        rows.push({
+          name: ag.name,
+          customerName: customer.name || '',
+          customerPhone: customer.phone || '',
+          guarantorName: guarantor.name || '',
+          guarantorPhone: guarantor.phone || '',
+          hire, paid: totalPaid, balance, status, statusClass
+        });
+      }
+      rows.sort((a, b) => b.balance - a.balance);
+
+      let bodyRows = '';
+      for (const r of rows) {
+        let contactInfo = '';
+        if (r.customerPhone) contactInfo += '<div style="font-size:9px;color:#64748b;margin-top:2px;">👤 ' + escapeHtml(r.customerPhone) + '</div>';
+        if (r.guarantorPhone) contactInfo += '<div style="font-size:9px;color:#c2410c;margin-top:2px;">🛡️ ' + escapeHtml(r.guarantorName || 'Guarantor') + ': ' + escapeHtml(r.guarantorPhone) + '</div>';
+
+        bodyRows +=
+          '<tr>' +
+            '<td class="c-name">' + escapeHtml(r.name) + contactInfo + '</td>' +
+            '<td class="c-num">' + formatCurrency(r.hire) + '</td>' +
+            '<td class="c-num c-paid">' + formatCurrency(r.paid) + '</td>' +
+            '<td class="c-num c-balance">' + formatCurrency(r.balance) + '</td>' +
+            '<td class="c-status"><span class="pill ' + r.statusClass + '">' + r.status + '</span></td>' +
+          '</tr>';
+      }
+
+      const brandName = businessInfo.name ? businessInfo.name : 'PayPlan Ledger';
+      const logoImg = businessInfo.logo
+        ? '<img src="' + businessInfo.logo + '" alt="Logo" style="width:44px;height:44px;border-radius:12px;object-fit:cover;box-shadow:0 6px 16px rgba(16,185,129,0.35);flex-shrink:0;">'
+        : '<div class="brand-icon">💼</div>';
+
+      return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(brandName) + ' — Portfolio</title><style>' +
+        '*{box-sizing:border-box;margin:0;padding:0}' +
+        'body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fff;color:#0f172a;padding:0;width:794px}' +
+        '.page{padding:56px 56px 48px;background:#fff;min-height:1123px;position:relative}' +
+        '.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:2px solid #10b981;margin-bottom:24px;gap:16px}' +
+        '.brand{display:flex;align-items:center;gap:12px;flex:1;min-width:0}' +
+        '.brand-icon{width:44px;height:44px;background:linear-gradient(135deg,#10b981 0%,#059669 100%);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;box-shadow:0 6px 16px rgba(16,185,129,0.35);flex-shrink:0}' +
+        '.brand-text{line-height:1.3;min-width:0}' +
+        '.brand-name{font-size:15px;font-weight:900;color:#0f172a;letter-spacing:-0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+        '.brand-sub{font-size:10px;font-weight:700;color:#10b981;letter-spacing:0.14em;text-transform:uppercase;margin-top:2px}' +
+        '.brand-contact{font-size:9px;color:#64748b;font-weight:600;margin-top:2px;line-height:1.4}' +
+        '.doc-meta{text-align:right;font-size:10px;color:#64748b;line-height:1.6;flex-shrink:0}' +
+        '.doc-meta .id{font-family:"Courier New",monospace;color:#0f172a;font-weight:800;letter-spacing:0.02em}' +
+        '.doc-title{font-size:26px;font-weight:900;color:#0f172a;letter-spacing:-0.03em;margin-bottom:4px}' +
+        '.doc-sub{font-size:12px;color:#64748b;font-weight:600;margin-bottom:22px}' +
+        '.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px}' +
+        '.sum-card{padding:16px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;text-align:center}' +
+        '.sum-card.count{background:#f1f5f9}' +
+        '.sum-card.contract{background:#f1f5f9}' +
+        '.sum-card.paid{background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.3)}' +
+        '.sum-card.outstanding{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.3)}' +
+        '.sum-label{font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#64748b;margin-bottom:6px}' +
+        '.sum-card.paid .sum-label{color:#059669}' +
+        '.sum-card.outstanding .sum-label{color:#c2410c}' +
+        '.sum-value{font-size:16px;font-weight:900;letter-spacing:-0.03em;color:#0f172a;font-variant-numeric:tabular-nums}' +
+        '.sum-card.paid .sum-value{color:#059669}' +
+        '.sum-card.outstanding .sum-value{color:#c2410c}' +
+        '.section-label{font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px}' +
+        '.section-label .dot{width:6px;height:6px;background:#10b981;border-radius:50%;display:inline-block}' +
+        'table.portfolio{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}' +
+        'table.portfolio thead th{background:#0f172a;color:#fff;padding:11px 12px;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;text-align:right}' +
+        'table.portfolio thead th:first-child{text-align:left;border-top-left-radius:8px}' +
+        'table.portfolio thead th:last-child{border-top-right-radius:8px;text-align:center}' +
+        'table.portfolio tbody td{padding:11px 12px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle}' +
+        'table.portfolio tbody td.c-name{text-align:left;color:#0f172a;font-weight:700;letter-spacing:-0.01em}' +
+        'table.portfolio tbody td.c-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}' +
+        'table.portfolio tbody td.c-paid{color:#059669;font-weight:700}' +
+        'table.portfolio tbody td.c-balance{color:#c2410c;font-weight:800}' +
+        'table.portfolio tbody td.c-status{text-align:center}' +
+        'table.portfolio tbody tr:nth-child(even) td{background:#f8fafc}' +
+        'table.portfolio tbody tr:last-child td{border-bottom:2px solid #10b981}' +
+        '.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase}' +
+        '.pill.st-active{background:#dbeafe;color:#1e40af}' +
+        '.pill.st-complete{background:#d1fae5;color:#065f46}' +
+        '.pill.st-overdue{background:#fee2e2;color:#991b1b}' +
+        '.footer{margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#94a3b8;letter-spacing:0.08em;text-transform:uppercase;font-weight:600}' +
+        '.footer .brand-mark{color:#10b981;font-weight:800}' +
+        '.empty-state{padding:60px 20px;text-align:center;background:#f8fafc;border-radius:12px;color:#94a3b8;font-size:12px}' +
+        '</style></head><body>' +
+        '<div class="page">' +
+          '<div class="header">' +
+            '<div class="brand">' +
+              logoImg +
+              '<div class="brand-text">' +
+                '<div class="brand-name">' + escapeHtml(brandName) + '</div>' +
+                '<div class="brand-sub">Portfolio Statement</div>' +
+                (businessInfo.phone || businessInfo.email || businessInfo.address ?
+                  '<div class="brand-contact">' +
+                    [businessInfo.phone ? '📞 ' + escapeHtml(businessInfo.phone) : '',
+                     businessInfo.email ? '📧 ' + escapeHtml(businessInfo.email) : '',
+                     businessInfo.address ? '📍 ' + escapeHtml(businessInfo.address) : '']
+                     .filter(Boolean).join(' &nbsp;·&nbsp; ') +
+                  '</div>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="doc-meta">' +
+              '<div>Doc ID: <span class="id">' + docId + '</span></div>' +
+              '<div>' + generated + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="doc-title">Customer Balance Summary</div>' +
+          '<div class="doc-sub">All agreements · Sorted by outstanding balance</div>' +
+          '<div class="summary-grid">' +
+            '<div class="sum-card count">' +
+              '<div class="sum-label">Customers</div>' +
+              '<div class="sum-value">' + stats.count + '</div>' +
+            '</div>' +
+            '<div class="sum-card contract">' +
+              '<div class="sum-label">Total Contract</div>' +
+              '<div class="sum-value">' + formatCurrency(stats.totalContract) + '</div>' +
+            '</div>' +
+            '<div class="sum-card paid">' +
+              '<div class="sum-label">Total Paid</div>' +
+              '<div class="sum-value">' + formatCurrency(stats.totalPaid) + '</div>' +
+            '</div>' +
+            '<div class="sum-card outstanding">' +
+              '<div class="sum-label">Outstanding</div>' +
+              '<div class="sum-value">' + formatCurrency(stats.totalOutstanding) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="section-label"><span class="dot"></span> Customer Balances</div>' +
+          (bodyRows ?
+            '<table class="portfolio">' +
+              '<thead><tr>' +
+                '<th>Customer / Agreement</th>' +
+                '<th>Contract</th>' +
+                '<th>Paid</th>' +
+                '<th>Balance</th>' +
+                '<th>Status</th>' +
+              '</tr></thead>' +
+              '<tbody>' + bodyRows + '</tbody>' +
+            '</table>'
+            :
+            '<div class="empty-state">No customers to report yet.</div>'
+          ) +
+          '<div class="footer">' +
+            '<span><span class="brand-mark">' + escapeHtml(businessInfo.name || 'PayPlan Ledger') + '</span> · Powered by PayPlan Ledger</span>' +
+            '<span>' + stats.count + ' customer' + (stats.count === 1 ? '' : 's') + ' · Demo Page 1</span>' +
+          '</div>' +
+        '</div></body></html>';
+    }
+
+    // ---------- PDF handlers ----------
+    async function handleDownloadFull() {
+      const ag = agreements[currentAgreementId];
+      if (!ag) { showToast('No agreement selected'); return; }
+      const r = ag.records;
+      if (!r.length) { showToast('No records to export'); return; }
+
+      const reportTitle = prompt('Report title:', 'Payment Statement') || 'Payment Statement';
+      const agreementName = prompt('Agreement name:', ag.name) || ag.name;
+      const seller = prompt('Seller:', businessInfo.name || 'Seller') || 'Seller';
+      const buyer = prompt('Buyer:', (getPartyData(ag).customer.name || 'Buyer')) || 'Buyer';
+
+      await generatePDF(
+        buildPDF(r, reportTitle, 'Full Payment History', agreementName, seller, buyer, ag),
+        'PayPlan_Demo_' + agreementName.replace(/[^a-z0-9]/gi, '_') + '.pdf'
+      );
+    }
+
+    async function handleDownloadRange() {
+      const ag = agreements[currentAgreementId];
+      if (!ag) { showToast('No agreement selected'); return; }
+      const s = document.getElementById('reportStartDate').value;
+      const e = document.getElementById('reportEndDate').value;
+      if (!s || !e) { showToast('Select a date range'); return; }
+      const f = ag.records.filter(r => r.date >= s && r.date <= e);
+      if (!f.length) { showToast('No records in that range'); return; }
+
+      const reportTitle = prompt('Report title:', 'Payment Statement') || 'Payment Statement';
+      const agreementName = prompt('Agreement name:', ag.name) || ag.name;
+      const seller = prompt('Seller:', businessInfo.name || 'Seller') || 'Seller';
+      const buyer = prompt('Buyer:', (getPartyData(ag).customer.name || 'Buyer')) || 'Buyer';
+
+      await generatePDF(
+        buildPDF(f, reportTitle, s + ' to ' + e, agreementName, seller, buyer, ag),
+        'PayPlan_Demo_' + agreementName.replace(/[^a-z0-9]/gi, '_') + '_range.pdf'
+      );
+    }
+
+    async function handlePortfolioPDF() {
+      const stats = calcPortfolioStats();
+      if (stats.count === 0) { showToast('No customers to export'); return; }
+      await generatePDF(buildPortfolioPDF(), 'PayPlan_Demo_Portfolio_' + new Date().toISOString().slice(0, 10) + '.pdf');
+    }
+
+    function setToday() {
+      const d = new Date().toISOString().slice(0, 10);
+      document.getElementById('reportStartDate').value = d;
+      document.getElementById('reportEndDate').value = d;
+    }
+    function setThisWeek() {
+      const t = new Date(), day = t.getDay(), diff = day === 0 ? 6 : day - 1;
+      const mon = new Date(t); mon.setDate(t.getDate() - diff);
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      document.getElementById('reportStartDate').value = mon.toISOString().slice(0, 10);
+      document.getElementById('reportEndDate').value = sun.toISOString().slice(0, 10);
+    }
+    function setThisMonth() {
+      const n = new Date();
+      document.getElementById('reportStartDate').value = new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0, 10);
+      document.getElementById('reportEndDate').value = new Date(n.getFullYear(), n.getMonth() + 1, 0).toISOString().slice(0, 10);
+    }
+
+    // ---------- Toast ----------
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerText = msg;
+      document.getElementById('toastContainer').appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    // ---------- Sidebar ----------
+    function toggleSidebar() {
+      const sidebar = document.getElementById('appSidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const floating = document.getElementById('floatingMenuBtn');
+      const hidden = sidebar.classList.toggle('sidebar-hidden');
+      document.body.classList.toggle('sidebar-closed', hidden);
+      floating.classList.toggle('visible', hidden);
+      backdrop.classList.toggle('visible', !hidden);
+    }
+
+    function closeSidebarIfMobile() {
+      if (window.innerWidth <= 900) {
+        document.getElementById('appSidebar').classList.add('sidebar-hidden');
+        document.body.classList.add('sidebar-closed');
+        document.getElementById('floatingMenuBtn').classList.add('visible');
+        document.getElementById('sidebarBackdrop').classList.remove('visible');
+      }
+    }
+
+    function restoreSidebarState() {
+      if (window.innerWidth <= 900) {
+        document.getElementById('appSidebar').classList.add('sidebar-hidden');
+        document.body.classList.add('sidebar-closed');
+        document.getElementById('floatingMenuBtn').classList.add('visible');
+      } else {
+        document.getElementById('appSidebar').classList.remove('sidebar-hidden');
+        document.body.classList.remove('sidebar-closed');
+        document.getElementById('floatingMenuBtn').classList.remove('visible');
+      }
+    }
+
+    // ---------- Theme ----------
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark');
+      document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+      localStorage.setItem('pmTheme', isDark ? 'dark' : 'light');
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', isDark ? '#070a14' : '#f5f7fb');
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem('pmTheme');
+      if (saved === 'light') {
+        document.body.classList.remove('dark');
+        document.getElementById('themeToggle').textContent = '🌙';
+      } else {
+        document.body.classList.add('dark');
+        document.getElementById('themeToggle').textContent = '☀️';
+      }
+    }
+
+    // ---------- Switch section ----------
+    function switchSection(sectionId) {
+      document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById('section-' + sectionId);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-icons button').forEach(el => el.classList.remove('active'));
+      const btn = document.querySelector('.nav-icons button[data-section="' + sectionId + '"]');
+      if (btn) btn.classList.add('active');
+      if (sectionId === 'dashboard') { updateDashboardStats(); updateTodayCollections(); }
+      if (sectionId === 'history') { if (agreements[currentAgreementId]) renderHistoryTable(agreements[currentAgreementId].records); }
+      if (sectionId === 'customers') renderCustomers();
+      if (sectionId === 'payment') renderPaymentPartyInfo();
+      if (sectionId === 'settings') { loadBusinessInfoUI(); }
+      closeSidebarIfMobile();
+      setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 50);
+    }
+
+    function loadBusinessInfoUI() {
+      document.getElementById('businessNameInput').value = businessInfo.name || '';
+      document.getElementById('businessPhoneInput').value = businessInfo.phone || '';
+      document.getElementById('businessEmailInput').value = businessInfo.email || '';
+      document.getElementById('businessAddressInput').value = businessInfo.address || '';
+      document.getElementById('currencySelect').value = currentCurrencySymbol;
+    }
+
+    // ---------- Init ----------
+    function initDemo() {
+      agreements = JSON.parse(JSON.stringify(demoAgreements));
+      loadTheme();
+      restoreSidebarState();
+      renderAgreementsList();
+      loadCurrentAgreementData();
+      updatePreviewForCurrent();
+      loadScheduleIntoForm();
+      updateReminderDisplay();
+      updateDashboardStats();
+      updateStickyHeader();
+      renderCustomers();
+      renderPaymentPartyInfo();
+      updateTodayCollections();
+
+      // search / filter listeners
+      document.getElementById('customersSearchInput')?.addEventListener('input', renderCustomers);
+      document.getElementById('customersSearchClearBtn')?.addEventListener('click', () => {
+        document.getElementById('customersSearchInput').value = '';
+        renderCustomers();
+      });
+      document.getElementById('customersFilterRow')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.customers-filter-btn');
+        if (!btn) return;
+        customersActiveFilter = btn.dataset.filter;
+        document.querySelectorAll('.customers-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === customersActiveFilter));
+        renderCustomers();
+      });
+      document.getElementById('customersSortSelect')?.addEventListener('change', renderCustomers);
+
+      document.getElementById('searchHistoryInput')?.addEventListener('input', () => {
+        if (agreements[currentAgreementId]) renderHistoryTable(agreements[currentAgreementId].records);
+      });
+      document.getElementById('searchDateFrom')?.addEventListener('change', () => {
+        if (agreements[currentAgreementId]) renderHistoryTable(agreements[currentAgreementId].records);
+      });
+      document.getElementById('searchDateTo')?.addEventListener('change', () => {
+        if (agreements[currentAgreementId]) renderHistoryTable(agreements[currentAgreementId].records);
+      });
+      document.getElementById('searchClearBtn')?.addEventListener('click', () => {
+        document.getElementById('searchHistoryInput').value = '';
+        document.getElementById('searchDateFrom').value = '';
+        document.getElementById('searchDateTo').value = '';
+        if (agreements[currentAgreementId]) renderHistoryTable(agreements[currentAgreementId].records);
+      });
+
+      document.getElementById('tcAction')?.addEventListener('click', () => switchSection('customers'));
+
+      document.getElementById('headerAgreementName')?.addEventListener('click', () => switchSection('agreements'));
+
+      // Force the "Overdue" filter to be visible on the customer tab
+      document.querySelectorAll('.customers-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'overdue'));
+
+      // Show app
+      document.getElementById('mainAppContainer').style.display = 'block';
+      loaderHidden = true;
+    }
+
+    // Boot
+    window.addEventListener('DOMContentLoaded', initDemo);
+  </script>
+</body>
+</html>
